@@ -383,10 +383,10 @@ function formCliente(c) {
 function mostrarAcesso(login, senha) {
   const m = modal(`<div class="cab"><h1 style="font-size:17px">Dados de acesso do cliente</h1></div>
   <p class="mu" style="line-height:1.6;margin:0 0 14px">Envie para o cliente. A senha não fica guardada no painel, então anote agora.</p>
-  <div class="det" style="margin-bottom:16px"><div><small>App</small>https://rafaeldiasdev1.github.io/rastreador-rj/</div><div><small>Login</small>${esc(login)}</div><div><small>Senha</small><code>${esc(senha)}</code></div></div>
+  <div class="det" style="margin-bottom:16px"><div><small>App</small>https://app.rjdomotica.com/</div><div><small>Login</small>${esc(login)}</div><div><small>Senha</small><code>${esc(senha)}</code></div></div>
   <div class="acoes" style="justify-content:flex-end"><button class="btn2" id="b-cp">Copiar mensagem</button><button class="btn" data-x>Pronto</button></div>`, true);
   $('[data-x]', m).onclick = fecharModal;
-  $('#b-cp', m).onclick = () => copiar(`Seu acesso ao rastreamento RJ Domótica:\nApp: https://rafaeldiasdev1.github.io/rastreador-rj/\nLogin: ${login}\nSenha: ${senha}\nNo primeiro acesso, abra o link no celular e toque em "Instalar app" (Android) ou Compartilhar › "Adicionar à Tela de Início" (iPhone).`);
+  $('#b-cp', m).onclick = () => copiar(`Seu acesso ao rastreamento RJ Domótica:\nApp: https://app.rjdomotica.com/\nLogin: ${login}\nSenha: ${senha}\nNo primeiro acesso, abra o link no celular e toque em "Instalar app" (Android) ou Compartilhar › "Adicionar à Tela de Início" (iPhone).`);
 }
 
 async function telaCliente(id) {

@@ -2,8 +2,8 @@
 
 Plataforma de rastreamento veicular: app do cliente (PWA), painel do administrador, cobrança automática (Mercado Pago, e-mail e WhatsApp) e bloqueio por inadimplência.
 
-- App do cliente: https://rafaeldiasdev1.github.io/rastreador-rj/
-- Painel do administrador: https://rafaeldiasdev1.github.io/rastreador-rj/admin/
+- App do cliente: https://app.rjdomotica.com/
+- Painel do administrador: https://app.rjdomotica.com/admin/
 - **Configuração das integrações: veja [GUIA.md](GUIA.md)**
 
 ## Pastas

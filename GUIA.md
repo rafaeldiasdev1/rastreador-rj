@@ -1,8 +1,8 @@
 # Guia de configuração · Plataforma RJ Domótica
 
 Endereços:
-- **App do cliente:** https://rafaeldiasdev1.github.io/rastreador-rj/
-- **Painel do administrador:** https://rafaeldiasdev1.github.io/rastreador-rj/admin/
+- **App do cliente:** https://app.rjdomotica.com/
+- **Painel do administrador:** https://app.rjdomotica.com/admin/
 
 Tudo já funciona em **modo simulado**: o painel cadastra clientes e veículos, gera cobranças, bloqueia e desbloqueia, e registra em "Mensagens" o que enviaria. Cada integração abaixo liga sozinha assim que o segredo dela é cadastrado.
 
