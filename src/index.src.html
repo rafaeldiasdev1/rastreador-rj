@@ -211,7 +211,6 @@ nav.barra.esconde{display:none}
     <label class="campo">Endereço do servidor<input id="s-url" type="url" inputmode="url" placeholder="https://rastreador.seudominio.com.br"></label>
     <label class="campo">Nome do veículo<input id="s-nome" type="text" placeholder="ONIX 1.0"></label>
     <label class="campo">Descrição<input id="s-sub" type="text" placeholder="2022 · Branco · placa"></label>
-    <label class="campo">Número do chip do rastreador (para escuta)<input id="s-fone" type="tel" placeholder="(21) 9XXXX-XXXX"></label>
     <button class="btn" type="submit">SALVAR</button>
     <button class="btn2" type="button" id="s-sair">Sair da conta</button>
   </form>
@@ -254,7 +253,6 @@ const cfg = {
   url: store.get('url', ''),
   nome: store.get('nome', 'ONIX 1.0'),
   sub: store.get('sub', '2022 · Branco'),
-  fone: store.get('fone', ''),
   notif: store.get('notif', { ign: true, cerca: true, bat: true, vib: false, bloq: true })
 };
 const hora = (d) => new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -472,6 +470,13 @@ const Mapa = {
   }
 };
 
+/* Escuta: o administrador libera por veículo no servidor (atributo "escuta" = true
+   e o número do chip no campo Telefone do dispositivo). Nunca aparece na demonstração. */
+function escutaLiberada() {
+  const d = Traccar.dev;
+  return !cfg.demo && !!d && !!d.phone && (d.attributes || {}).escuta === true;
+}
+
 /* ============ telas ============ */
 const fonte = () => (cfg.demo ? Demo : Traccar);
 let logado = false, diaHist = 0;
@@ -498,7 +503,7 @@ function render() {
   av.classList.toggle('on', st.pendente === 'bloq');
   av.textContent = 'Bloqueio programado: o corte acontece assim que o carro estiver abaixo de ' + LIMITE_BLOQUEIO + ' km/h ou parado.';
   $('p-ponto').classList.toggle('on', st.naoLidos > 0);
-  $('b-escuta').hidden = cfg.demo || !cfg.fone; // escuta só no modo real, com o chip cadastrado
+  $('b-escuta').hidden = !escutaLiberada(); // liberada pelo administrador, por veículo
   Mapa.posicionar();
   if (location.hash === '#alertas') renderAlertas();
 }
@@ -535,14 +540,14 @@ document.querySelectorAll('.filtros button').forEach((b) => b.addEventListener('
 
 function renderAjustes() {
   $('s-demo').setAttribute('aria-checked', cfg.demo);
-  $('s-url').value = cfg.url; $('s-nome').value = cfg.nome; $('s-sub').value = cfg.sub; $('s-fone').value = cfg.fone;
+  $('s-url').value = cfg.url; $('s-nome').value = cfg.nome; $('s-sub').value = cfg.sub;
   $('s-sair').hidden = !logado;
 }
 $('s-demo').addEventListener('click', () => { cfg.demo = !cfg.demo; store.set('demo', cfg.demo); renderAjustes(); trocarFonte(); });
 $('f-ajustes').addEventListener('submit', (e) => {
   e.preventDefault();
-  cfg.url = $('s-url').value.trim(); cfg.nome = $('s-nome').value.trim(); cfg.sub = $('s-sub').value.trim(); cfg.fone = $('s-fone').value.trim();
-  ['url', 'nome', 'sub', 'fone'].forEach((k) => store.set(k, cfg[k]));
+  cfg.url = $('s-url').value.trim(); cfg.nome = $('s-nome').value.trim(); cfg.sub = $('s-sub').value.trim();
+  ['url', 'nome', 'sub'].forEach((k) => store.set(k, cfg[k]));
   toast('Ajustes salvos'); render();
   if (!cfg.demo) trocarFonte();
 });
@@ -592,8 +597,8 @@ $('b-bloq').addEventListener('click', async () => {
   render();
 });
 $('b-escuta').addEventListener('click', () => {
-  if (cfg.demo || !cfg.fone) return;
-  location.href = 'tel:' + cfg.fone.replace(/[^\d+]/g, '');
+  if (!escutaLiberada()) return;
+  location.href = 'tel:' + Traccar.dev.phone.replace(/[^\d+]/g, '');
 });
 
 /* ============ rotas ============ */

@@ -21,6 +21,13 @@ Para gerar de novo depois de mudar algo: `python3 build.py`
 3. Cadastrar o J16 no Traccar com o IMEI dele.
 4. Enviar por SMS para o chip do rastreador:
    `SZCS#SERVIP=IP_DO_SERVIDOR#SERVPORT=5023#PTL_SEL=2#GT06SEL=1#`
-5. No app, em Ajustes: endereço do servidor e número do chip (para a escuta).
+5. No app, em Ajustes: endereço do servidor.
+
+## Escuta (microfone) — liberada pelo administrador
+O botão de escuta não aparece para o cliente por padrão. Para liberar em um veículo, no painel do Traccar (como administrador):
+- no campo **Telefone** do dispositivo, coloque o número do chip do rastreador;
+- em **Atributos**, adicione `escuta` com valor `true`.
+
+Sem os dois, o botão fica escondido. Na demonstração ele nunca aparece.
 
 O bloqueio usa os comandos `engineStop` e `engineResume` do Traccar. O próprio J16 só corta a bomba abaixo de 20 km/h ou com o carro parado.
