@@ -87,8 +87,8 @@ async function sincronizar(cliente_id: string, senha?: string) {
   const res: string[] = [];
   for (const v of veics || []) {
     if (!v.imei) { res.push(`${v.placa}: falta o IMEI do rastreador`); continue; }
-    const attrs = { escuta: !!(v.escuta && cli.escuta_liberada), placa: v.placa, marca: v.marca, modelo: v.modelo, cor: v.cor || "", ano: v.ano || "" };
-    const dev = { name: `${v.marca} ${v.modelo} · ${v.placa}`, uniqueId: v.imei, phone: v.chip_numero || "", model: v.modelo_rastreador || "", disabled: !v.ativo };
+    const attrs = { escuta: !!(v.escuta && cli.escuta_liberada), placa: v.placa, tipo: v.tipo || "carro", marca: v.marca, modelo: v.modelo, cor: v.cor || "", ano: v.ano || "" };
+    const dev = { name: `${v.marca} ${v.modelo} · ${v.placa}`, uniqueId: v.imei, phone: v.chip_numero || "", model: v.modelo_rastreador || "", category: ({ carro: "car", moto: "motorcycle", caminhao: "truck" } as Record<string, string>)[v.tipo] || "default", disabled: !v.ativo };
     let did = v.traccar_device_id;
     if (did) {
       const d = await traccar(`/api/devices/${did}`);
