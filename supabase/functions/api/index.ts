@@ -186,7 +186,7 @@ ${cob ? `<tr><td><table role="presentation" width="100%" style="border-top:1px s
 ${mostraPagamento && cob.pix_copia_cola ? `<tr><td style="color:#e8eaed;font-size:15px;font-weight:700;padding-bottom:6px">Pagar com Pix (confirmação na hora)</td></tr>
 <tr><td style="color:#9aa3ad;font-size:13px;padding-bottom:6px">O QR Code vai anexado. Ou copie o código abaixo no app do seu banco:</td></tr>
 <tr><td style="background:#0b0d10;border:1px solid #262a31;border-radius:10px;padding:12px;color:#e8eaed;font-size:12px;word-break:break-all;font-family:monospace">${cob.pix_copia_cola}</td></tr>
-<tr><td style="padding:12px 0 18px"><a href="https://rafaeldiasdev1.github.io/rastreador-rj/pix/#${encodeURIComponent(cob.pix_copia_cola)}" style="display:inline-block;background:#38d6f5;color:#0b0d10;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px">Copiar Pix</a></td></tr>` : ""}
+<tr><td style="padding:12px 0 18px"><a href="https://app.rjdomotica.com/pix/#${encodeURIComponent(cob.pix_copia_cola)}" style="display:inline-block;background:#38d6f5;color:#0b0d10;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px">Copiar Pix</a></td></tr>` : ""}
 ${mostraPagamento && cob.boleto_url ? `<tr><td style="color:#e8eaed;font-size:15px;font-weight:700;padding:6px 0">Pagar com boleto</td></tr>
 ${cob.boleto_codigo ? `<tr><td style="color:#c4cad1;font-size:13px;font-family:monospace;padding-bottom:10px">${cob.boleto_codigo}</td></tr>` : ""}
 <tr><td style="padding-bottom:18px"><a href="${cob.boleto_url}" style="display:inline-block;border:1px solid #38d6f5;color:#38d6f5;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:10px">Ver boleto</a></td></tr>
@@ -204,6 +204,7 @@ async function notificar(cli: Obj, cob: Obj | null, tipo: string, cfg: Obj, extr
   if (env("RESEND_API_KEY") && env("EMAIL_REMETENTE")) {
     try {
       const corpo: Obj = { from: env("EMAIL_REMETENTE"), to: [cli.email], subject: c.assunto, html: emailHtml(c, cob, empresa, tipo) };
+      if (env("EMAIL_RESPOSTA")) corpo.reply_to = env("EMAIL_RESPOSTA");
       if (cob?.pix_qr_base64 && tipo !== "pagamento") corpo.attachments = [{ filename: "pix-qrcode.png", content: cob.pix_qr_base64 }];
       const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + env("RESEND_API_KEY"), "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
       const d = await r.json().catch(() => ({}));
