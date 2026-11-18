@@ -104,6 +104,11 @@ nav.barra.esconde{display:none}
 .demo{position:fixed;right:10px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:800;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--la);background:rgba(255,138,61,.12);border:1px solid rgba(255,138,61,.4);padding:4px 8px;border-radius:999px;display:none}
 .demo.on{display:block}
 .carmk{width:30px;height:56px}
+.veicbtn{background:none;border:none;padding:4px 0;display:flex;align-items:center;gap:10px;color:var(--tx);min-height:44px;text-align:left}
+.veicbtn[disabled]{cursor:default}
+.frota{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto}
+.frota button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg);border:1px solid var(--ln);border-radius:16px;padding:12px 14px;color:var(--tx)}
+.frota button.sel{border-color:rgba(56,214,245,.6);background:rgba(56,214,245,.08)}
 </style>
 </head>
 <body>
@@ -134,10 +139,13 @@ nav.barra.esconde{display:none}
     <a class="icbtn" href="#alertas" aria-label="Alertas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="ponto" id="p-ponto"></span></a>
   </header>
   <div class="veic">
-    <div style="display:flex;flex-direction:column;gap:4px">
-      <span class="orb" style="font-size:18px;font-weight:700" id="v-nome">ONIX 1.0</span>
-      <span style="font-size:13px;color:var(--mu)" id="v-sub">2022 · Branco</span>
-    </div>
+    <button class="veicbtn" id="v-trocar" aria-label="Trocar de veículo" disabled>
+      <span style="display:flex;flex-direction:column;gap:4px">
+        <span class="orb" style="font-size:18px;font-weight:700" id="v-nome">—</span>
+        <span style="font-size:13px;color:var(--mu)" id="v-sub"></span>
+      </span>
+      <svg id="v-seta" hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ci)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
     <span class="pill" id="v-online"><i></i><span>Online</span></span>
   </div>
   <div class="mapa" id="mapa">
@@ -209,8 +217,6 @@ nav.barra.esconde{display:none}
   <div class="sec">SERVIDOR DO RASTREADOR</div>
   <form class="form" id="f-ajustes">
     <label class="campo">Endereço do servidor<input id="s-url" type="url" inputmode="url" placeholder="https://rastreador.seudominio.com.br"></label>
-    <label class="campo">Nome do veículo<input id="s-nome" type="text" placeholder="ONIX 1.0"></label>
-    <label class="campo">Descrição<input id="s-sub" type="text" placeholder="2022 · Branco · placa"></label>
     <button class="btn" type="submit">SALVAR</button>
     <button class="btn2" type="button" id="s-sair">Sair da conta</button>
   </form>
@@ -228,6 +234,14 @@ nav.barra.esconde{display:none}
 
 <div class="demo" id="selo-demo">DEMONSTRAÇÃO</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="fundo" id="frota-dlg">
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="frota-t">
+    <span class="orb" style="font-size:18px;font-weight:700" id="frota-t">Seus veículos</span>
+    <div class="frota" id="frota-lista"></div>
+    <button class="btn2" id="frota-fechar">Fechar</button>
+  </div>
+</div>
 
 <div class="fundo" id="dlg">
   <div class="folha" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
@@ -251,8 +265,6 @@ const store = {
 const cfg = {
   demo: store.get('demo', true),
   url: store.get('url', ''),
-  nome: store.get('nome', 'ONIX 1.0'),
-  sub: store.get('sub', '2022 · Branco'),
   notif: store.get('notif', { ign: true, cerca: true, bat: true, vib: false, bloq: true })
 };
 const hora = (d) => new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -299,8 +311,18 @@ function alerta(tipo, quando, detalhe) {
 
 /* ============ fonte de dados: DEMONSTRAÇÃO ============ */
 const Demo = {
-  timer: null, fase: 'parado', t0: 0, dir: 1, viagens: [], viagemAtual: null,
+  timer: null, fase: 'parado', t0: 0, dir: 1, viagens: [], viagemAtual: null, sel: 1, salvo: null,
+  frota() { return [{ id: 1, nome: 'ONIX 1.0', sub: '2022 · Branco · simulado', online: true }, { id: 2, nome: 'VEÍCULO 2', sub: 'Exemplo · estacionado', online: true }]; },
+  selecionar(id) {
+    if (id === this.sel) return;
+    if (this.sel === 1) this.salvo = Object.assign({}, st);
+    this.sel = id;
+    if (id === 1 && this.salvo) Object.assign(st, this.salvo, { alertas: st.alertas, naoLidos: st.naoLidos });
+    if (id === 2) Object.assign(st, { vel: 0, ign: false, bat: 12.4, sats: 9, bloq: false, pendente: null, frac: 0.62, atual: Date.now(), online: true });
+    render();
+  },
   iniciar() {
+    this.sel = 1; this.salvo = null;
     st.online = true; st.bat = 12.6; st.sats = 11; st.frac = 0; st.ign = false; st.vel = 0;
     this.viagens = this.historicoFalso();
     this.fase = 'parado'; this.t0 = Date.now();
@@ -309,6 +331,7 @@ const Demo = {
   },
   parar() { clearInterval(this.timer); },
   passo() {
+    if (this.sel !== 1) { st.atual = Date.now(); render(); return; } // a simulação anda só com o Onix na tela
     const agora = Date.now(), dt = (agora - this.t0) / 1000;
     if (this.fase === 'parado' && dt > 15 && !st.bloq) {
       this.fase = 'ligado'; this.t0 = agora; st.ign = true; st.bat = 14.1; alerta('ign_on');
@@ -362,11 +385,11 @@ const Demo = {
 
 /* ============ fonte de dados: SERVIDOR TRACCAR (rastreador real) ============ */
 const Traccar = {
-  ws: null, dev: null, tent: 0,
+  ws: null, dev: null, tent: 0, devs: [], pos: {},
   base() { return cfg.url.replace(/\/+$/, ''); },
   async api(caminho, opt) {
     const r = await fetch(this.base() + caminho, Object.assign({ credentials: 'include', headers: { Accept: 'application/json' } }, opt || {}));
-    if (r.status === 401) throw new Error('sessao');
+    if (r.status === 401) { const t = await r.text().catch(() => ''); throw new Error(/disabled/i.test(t) ? 'suspenso' : 'sessao'); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const ct = r.headers.get('content-type') || '';
     return ct.includes('json') ? r.json() : r.text();
@@ -377,22 +400,34 @@ const Traccar = {
   },
   async sessaoAtiva() { try { await this.api('/api/session'); return true; } catch (e) { return false; } },
   async iniciar() {
-    const devs = await this.api('/api/devices');
-    if (!devs.length) throw new Error('Nenhum rastreador cadastrado no servidor.');
-    this.dev = devs[0]; st.online = this.dev.status === 'online';
-    const pos = await this.api('/api/positions');
-    const p = pos.find((x) => x.deviceId === this.dev.id); if (p) this.aplicar(p);
-    this.conectarWs(); render();
+    this.devs = await this.api('/api/devices');
+    if (!this.devs.length) throw new Error('Nenhum veículo liberado para esta conta. Fale com a RJ Domótica.');
+    (await this.api('/api/positions')).forEach((p) => { this.pos[p.deviceId] = p; });
+    const salvo = store.get('veiculo', null);
+    this.selecionar((this.devs.find((d) => d.id === salvo) || this.devs[0]).id);
+    this.conectarWs();
   },
+  frota() {
+    return this.devs.map((d) => { const a = d.attributes || {}; return { id: d.id, nome: a.marca ? (a.marca + ' ' + a.modelo).toUpperCase() : d.name, sub: [a.placa, a.cor, a.ano].filter(Boolean).join(' · '), online: d.status === 'online' }; });
+  },
+  selecionar(id) {
+    this.dev = this.devs.find((d) => d.id === id); store.set('veiculo', id);
+    Object.assign(st, { vel: 0, ign: false, bat: null, sats: null, bloq: false, pendente: null, atual: null, lat: null, lon: null, curso: 0 });
+    st.online = this.dev.status === 'online';
+    if (Mapa.mk) { Mapa.mk.remove(); Mapa.mk = null; }
+    if (this.pos[id]) this.aplicar(this.pos[id]);
+    render();
+  },
+  nomeDe(id) { const v = this.frota().find((x) => x.id === id); return v ? v.nome : ''; },
   conectarWs() {
     const u = this.base().replace(/^http/, 'ws') + '/api/socket';
     try { this.ws = new WebSocket(u); } catch (e) { return; }
     this.ws.onopen = () => { this.tent = 0; };
     this.ws.onmessage = (m) => {
       let d; try { d = JSON.parse(m.data); } catch (e) { return; }
-      (d.devices || []).forEach((x) => { if (x.id === this.dev.id) st.online = x.status === 'online'; });
-      (d.positions || []).forEach((x) => { if (x.deviceId === this.dev.id) this.aplicar(x); });
-      (d.events || []).forEach((e) => { if (e.deviceId === this.dev.id) this.evento(e); });
+      (d.devices || []).forEach((x) => { const i = this.devs.findIndex((y) => y.id === x.id); if (i >= 0) this.devs[i] = x; if (x.id === this.dev.id) { this.dev = x; st.online = x.status === 'online'; } });
+      (d.positions || []).forEach((x) => { this.pos[x.deviceId] = x; if (x.deviceId === this.dev.id) this.aplicar(x); });
+      (d.events || []).forEach((e) => this.evento(e));
       render();
     };
     this.ws.onclose = () => { if (this.ws) setTimeout(() => this.conectarWs(), Math.min(30000, 2000 * ++this.tent)); };
@@ -411,11 +446,12 @@ const Traccar = {
   },
   evento(e) {
     const a = e.attributes || {}, q = new Date(e.eventTime).getTime();
+    const qual = this.devs.length > 1 ? this.nomeDe(e.deviceId) : undefined;
     const mapa = { ignitionOn: 'ign_on', ignitionOff: 'ign_off', geofenceExit: 'cerca' };
-    if (mapa[e.type]) return alerta(mapa[e.type], q);
+    if (mapa[e.type]) return alerta(mapa[e.type], q, qual);
     if (e.type === 'alarm') {
-      if (a.alarm === 'powerCut' || a.alarm === 'powerOff') return alerta('bat', q);
-      if (a.alarm === 'vibration' || a.alarm === 'tampering' || a.alarm === 'movement') return alerta('vib', q);
+      if (a.alarm === 'powerCut' || a.alarm === 'powerOff') return alerta('bat', q, qual);
+      if (a.alarm === 'vibration' || a.alarm === 'tampering' || a.alarm === 'movement') return alerta('vib', q, qual);
     }
   },
   async comando(tipo) {
@@ -477,13 +513,29 @@ function escutaLiberada() {
   return !cfg.demo && !!d && !!d.phone && (d.attributes || {}).escuta === true;
 }
 
+function frota() { try { return fonte().frota() || []; } catch (e) { return []; } }
+function veiculoAtual() { const id = cfg.demo ? Demo.sel : (Traccar.dev && Traccar.dev.id); return frota().find((v) => v.id === id); }
+function abrirFrota() {
+  const atual = veiculoAtual();
+  $('frota-lista').innerHTML = frota().map((v) => '<button data-id="' + v.id + '" class="' + (atual && atual.id === v.id ? 'sel' : '') + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M7 11l1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/></svg><span style="display:flex;flex-direction:column;gap:3px;flex:1"><b style="font-size:15px">' + esc(v.nome) + '</b><span style="font-size:12px;color:var(--mu)">' + esc(v.sub) + '</span></span><span class="pill' + (v.online ? '' : ' off') + '"><i></i>' + (v.online ? 'Online' : 'Offline') + '</span></button>').join('');
+  $('frota-dlg').classList.add('on');
+}
+$('v-trocar').addEventListener('click', abrirFrota);
+$('frota-fechar').addEventListener('click', () => $('frota-dlg').classList.remove('on'));
+$('frota-lista').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  fonte().selecionar(Number(b.dataset.id)); $('frota-dlg').classList.remove('on');
+});
+
 /* ============ telas ============ */
 const fonte = () => (cfg.demo ? Demo : Traccar);
 let logado = false, diaHist = 0;
 
 function render() {
-  $('v-nome').textContent = cfg.nome || 'Meu carro';
-  $('v-sub').textContent = cfg.sub || '';
+  const fr = frota(), atual = veiculoAtual();
+  $('v-nome').textContent = atual ? atual.nome : '—';
+  $('v-sub').textContent = atual ? atual.sub : '';
+  $('v-seta').hidden = fr.length < 2; $('v-trocar').disabled = fr.length < 2;
   const on = $('v-online'); on.classList.toggle('off', !st.online);
   on.querySelector('span').textContent = st.online ? (cfg.demo ? 'Online · simulado' : 'Online · 4G') : 'Offline';
   $('m-vel').textContent = st.vel;
@@ -540,14 +592,13 @@ document.querySelectorAll('.filtros button').forEach((b) => b.addEventListener('
 
 function renderAjustes() {
   $('s-demo').setAttribute('aria-checked', cfg.demo);
-  $('s-url').value = cfg.url; $('s-nome').value = cfg.nome; $('s-sub').value = cfg.sub;
+  $('s-url').value = cfg.url;
   $('s-sair').hidden = !logado;
 }
 $('s-demo').addEventListener('click', () => { cfg.demo = !cfg.demo; store.set('demo', cfg.demo); renderAjustes(); trocarFonte(); });
 $('f-ajustes').addEventListener('submit', (e) => {
   e.preventDefault();
-  cfg.url = $('s-url').value.trim(); cfg.nome = $('s-nome').value.trim(); cfg.sub = $('s-sub').value.trim();
-  ['url', 'nome', 'sub'].forEach((k) => store.set(k, cfg[k]));
+  cfg.url = $('s-url').value.trim(); store.set('url', cfg.url);
   toast('Ajustes salvos'); render();
   if (!cfg.demo) trocarFonte();
 });
@@ -574,7 +625,7 @@ $('f-login').addEventListener('submit', async (e) => {
     }
     logado = true; location.hash = '#painel';
   } catch (err) {
-    $('l-erro').textContent = err.message === 'sessao' ? 'E-mail ou senha incorretos.' : err.message.startsWith('HTTP') || err.name === 'TypeError' ? 'Não consegui falar com o servidor. Confira o endereço em Ajustes.' : err.message;
+    $('l-erro').textContent = err.message === 'suspenso' ? 'Seu acesso está suspenso por mensalidade em aberto. Pague pelo link que você recebeu no WhatsApp ou no e-mail. Pelo Pix, a liberação é imediata.' : err.message === 'sessao' ? 'E-mail ou senha incorretos.' : err.message.startsWith('HTTP') || err.name === 'TypeError' ? 'Não consegui falar com o servidor. Confira o endereço em Ajustes.' : err.message;
   }
 });
 $('l-ajustes').addEventListener('click', () => { location.hash = '#ajustes'; });

@@ -1,9 +1,16 @@
 # RJ Domótica · Rastreador
 
-App instalável (PWA) para ver a localização do carro e bloquear/desbloquear pelo rastreador J16 (4G).
+Plataforma de rastreamento veicular: app do cliente (PWA), painel do administrador, cobrança automática (Mercado Pago, e-mail e WhatsApp) e bloqueio por inadimplência.
+
+- App do cliente: https://rafaeldiasdev1.github.io/rastreador-rj/
+- Painel do administrador: https://rafaeldiasdev1.github.io/rastreador-rj/admin/
+- **Configuração das integrações: veja [GUIA.md](GUIA.md)**
 
 ## Pastas
-- `src/index.src.html`: código do app (telas, estilos e lógica).
+- `src/index.src.html`: código do app do cliente.
+- `admin/index.src.html`: código do painel do administrador.
+- `supabase/migrations/`: estrutura do banco (clientes, veículos, cobranças, mensagens, feriados).
+- `supabase/functions/api/`: API (ações do painel, rotina diária de cobrança, webhook do Mercado Pago).
 - `icons/`: logo e ícones.
 - `build.py`: gera `docs/`, a pasta publicada no GitHub Pages.
 - `docs/`: o app pronto (index.html, manifest, service worker e ícones).
