@@ -57,6 +57,7 @@ h1{margin:0;font-family:Orbitron,sans-serif;font-size:22px;letter-spacing:1px}
 .grande[disabled]{opacity:.6}
 .quad{width:58px;height:58px;border-radius:18px;background:var(--sf);border:1px solid var(--ln);display:flex;align-items:center;justify-content:center;color:var(--tx)}
 .quad.on{color:var(--ci);background:rgba(56,214,245,.15)}
+.quad[hidden]{display:none}
 .aviso{margin:12px 16px 0;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.4;background:rgba(255,138,61,.1);border:1px solid rgba(255,138,61,.4);color:#ffc29a;display:none}
 .aviso.on{display:block}
 nav.barra{position:fixed;left:0;right:0;bottom:0;z-index:900;background:var(--sf2);border-top:1px solid #1c2027;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
@@ -497,6 +498,7 @@ function render() {
   av.classList.toggle('on', st.pendente === 'bloq');
   av.textContent = 'Bloqueio programado: o corte acontece assim que o carro estiver abaixo de ' + LIMITE_BLOQUEIO + ' km/h ou parado.';
   $('p-ponto').classList.toggle('on', st.naoLidos > 0);
+  $('b-escuta').hidden = cfg.demo || !cfg.fone; // escuta só no modo real, com o chip cadastrado
   Mapa.posicionar();
   if (location.hash === '#alertas') renderAlertas();
 }
@@ -590,11 +592,7 @@ $('b-bloq').addEventListener('click', async () => {
   render();
 });
 $('b-escuta').addEventListener('click', () => {
-  if (cfg.demo) {
-    const b = $('b-escuta'); b.classList.add('on'); toast('Simulação: ligando para o rastreador para escuta…');
-    setTimeout(() => b.classList.remove('on'), 4000); return;
-  }
-  if (!cfg.fone) { toast('Cadastre o número do chip do rastreador em Ajustes.', 'la'); return; }
+  if (cfg.demo || !cfg.fone) return;
   location.href = 'tel:' + cfg.fone.replace(/[^\d+]/g, '');
 });
 
