@@ -391,9 +391,10 @@ function alerta(tipo, quando, detalhe) {
   render();
 }
 
+const CASA = 'Rua Conde de Bonfim, 500 · Tijuca', TRAB = 'Av. Presidente Vargas, 1733 · Centro';
 /* ============ fonte de dados: DEMONSTRAÇÃO ============ */
 const Demo = {
-  timer: null, fase: 'parado', t0: 0, dir: 1, viagens: [], viagemAtual: null, sel: 1, salvo: null,
+  timer: null, fase: 'parado', t0: 0, dir: 1, lista: [], viagemAtual: null, sel: 1, salvo: null,
   frota() { return [{ id: 1, nome: 'ONIX 1.0', sub: '2022 · Branco · simulado', online: true }, { id: 2, nome: 'VEÍCULO 2', sub: 'Exemplo · estacionado', online: true }]; },
   selecionar(id) {
     if (id === this.sel) return;
@@ -406,7 +407,7 @@ const Demo = {
   iniciar() {
     this.sel = 1; this.salvo = null;
     st.online = true; st.bat = 12.6; st.sats = 11; st.frac = 0; st.ign = false; st.vel = 0;
-    this.viagens = this.historicoFalso();
+    this.inicioSessao = Date.now(); this.lista = this.historicoFalso();
     this.fase = 'parado'; this.t0 = Date.now();
     this.timer = setInterval(() => this.passo(), 1000);
     this.passo();
@@ -417,7 +418,7 @@ const Demo = {
     const agora = Date.now(), dt = (agora - this.t0) / 1000;
     if (this.fase === 'parado' && dt > 15 && !st.bloq) {
       this.fase = 'ligado'; this.t0 = agora; st.ign = true; st.bat = 14.1; alerta('ign_on');
-      this.viagemAtual = { inicio: agora, dist: 0, max: 0, rota: this.dir > 0 ? 'Casa → Trabalho' : 'Trabalho → Casa' };
+      this.viagemAtual = { tipo: 'viagem', inicio: agora, dist: 0, max: 0, de: this.dir > 0 ? CASA : TRAB, para: this.dir > 0 ? TRAB : CASA, via: 'Av. Maracanã e Av. Presidente Vargas' };
     } else if (this.fase === 'ligado' && dt > 3) {
       this.fase = 'andando'; this.t0 = agora;
       if (this.dir > 0) alerta('cerca');
@@ -432,7 +433,7 @@ const Demo = {
       st.vel = Math.max(0, st.vel - 15);
       if (st.vel === 0) {
         st.ign = false; st.bat = 12.6; alerta('ign_off');
-        const v = this.viagemAtual; v.fim = Date.now(); this.viagens.unshift(v); this.viagemAtual = null;
+        const v = this.viagemAtual; v.fim = Date.now(); this.lista.unshift(v); this.viagemAtual = null;
         this.fase = 'parado'; this.t0 = Date.now(); this.dir = -this.dir;
       }
     }
@@ -449,19 +450,55 @@ const Demo = {
     if (st.vel < LIMITE_BLOQUEIO) { this.executarBloqueio(); return 'ok'; }
     st.pendente = 'bloq'; render(); return 'pendente';
   },
+  /* Histórico de exemplo com ruas reais do Rio. Cada dia tem viagens e paradas; o pernoite liga o fim de um dia ao começo do seguinte. */
   historicoFalso() {
-    const d = (dias, h, m) => { const x = new Date(); x.setDate(x.getDate() - dias); x.setHours(h, m, 0, 0); return x.getTime(); };
-    const v = (dias, h1, m1, h2, m2, rota, dist, max) => ({ inicio: d(dias, h1, m1), fim: d(dias, h2, m2), rota, dist, max });
-    return [
-      v(1, 18, 5, 18, 31, 'Trabalho → Casa', 17.8, 76), v(1, 7, 40, 8, 12, 'Casa → Trabalho', 14.2, 82),
-      v(2, 19, 10, 19, 28, 'Mercado → Casa', 5.1, 48), v(2, 18, 0, 18, 22, 'Trabalho → Mercado', 13.6, 71),
-      v(3, 7, 45, 8, 20, 'Casa → Trabalho', 14.3, 79), v(5, 10, 15, 11, 2, 'Casa → Praia', 28.4, 92)
+    const L = {
+      casa: CASA, trab: TRAB,
+      lav: 'Rua do Lavradio, 90 · Centro', mer: 'Rua Barão de Mesquita, 300 · Tijuca', bot: 'Rua Voluntários da Pátria, 120 · Botafogo',
+      barra: 'Av. Lúcio Costa, 3150 · Barra da Tijuca', parq: 'Av. Infante Dom Henrique · Parque do Flamengo', mar: 'Rua Marquês de Abrantes, 55 · Flamengo'
+    };
+    // t = viagem [h1,m1,h2,m2, de, para, km, vmax, via, excesso?]  |  p = parada [h1,m1,h2,m2, local]
+    const util = [
+      ['t', 7, 38, 8, 9, L.casa, L.trab, 9.6, 71, 'Av. Maracanã e Av. Presidente Vargas'],
+      ['p', 8, 9, 12, 15, L.trab],
+      ['t', 12, 15, 12, 26, L.trab, L.lav, 2.1, 44, 'Av. Presidente Vargas e Rua do Riachuelo'],
+      ['p', 12, 26, 13, 21, L.lav],
+      ['t', 13, 21, 13, 30, L.lav, L.trab, 2.0, 41, 'Rua do Riachuelo'],
+      ['p', 13, 30, 18, 2, L.trab]
     ];
+    const volta1 = [['t', 18, 2, 18, 40, L.trab, L.mer, 10.8, 74, 'Av. Presidente Vargas e Av. Radial Oeste'], ['p', 18, 40, 19, 55, L.mer], ['t', 19, 55, 20, 3, L.mer, L.casa, 1.9, 38, 'Rua Conde de Bonfim']];
+    const volta2 = [['t', 18, 5, 18, 41, L.trab, L.bot, 9.4, 62, 'Av. Presidente Vargas e Aterro do Flamengo'], ['p', 18, 41, 20, 10, L.bot], ['t', 20, 10, 20, 52, L.bot, L.casa, 12.3, 88, 'Túnel Rebouças', 'Túnel Rebouças']];
+    const sab = [['t', 10, 15, 11, 2, L.casa, L.barra, 24.8, 92, 'Linha Amarela', 'Linha Amarela'], ['p', 11, 2, 16, 30, L.barra], ['t', 16, 30, 17, 20, L.barra, L.casa, 25.3, 79, 'Linha Amarela']];
+    const dom = [['t', 9, 40, 10, 12, L.casa, L.parq, 11.7, 66, 'Av. Radial Oeste e Aterro do Flamengo'], ['p', 10, 12, 13, 5, L.parq], ['t', 13, 5, 13, 22, L.parq, L.mar, 2.3, 38, 'Av. Infante Dom Henrique'], ['p', 13, 22, 15, 40, L.mar], ['t', 15, 40, 16, 15, L.mar, L.casa, 10.9, 71, 'Aterro do Flamengo e Av. Radial Oeste']];
+    const dia = (off) => {
+      const d = new Date(); d.setDate(d.getDate() - off); const w = d.getDay();
+      return w === 6 ? sab : w === 0 ? dom : (w === 3 || w === 5) ? util.concat(volta2) : util.concat(volta1);
+    };
+    const at = (off, h, m) => { const x = new Date(); x.setDate(x.getDate() - off); x.setHours(h, m, 0, 0); return x.getTime(); };
+    const corte = this.inicioSessao, out = [];
+    for (let off = 0; off <= 7; off++) {
+      const seg = dia(off), ult = dia(off + 1), u = ult[ult.length - 1];
+      const evs = seg.map((e) => e[0] === 't'
+        ? { tipo: 'viagem', inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), de: e[5], para: e[6], dist: e[7], max: e[8], via: e[9], excesso: e[10] }
+        : { tipo: 'parada', inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), local: e[5] });
+      // pernoite: do último destino do dia anterior até a primeira saída deste dia
+      const prim = seg[0];
+      evs.push({ tipo: 'pernoite', inicio: at(off + 1, u[3], u[4]), fim: at(off, prim[1], prim[2]), local: L.casa });
+      evs.forEach((e) => {
+        if (e.inicio >= corte) return;                       // ainda não aconteceu
+        if (e.fim > corte) { e.fim = corte; e.aberto = true; } // em andamento
+        if (e.tipo === 'viagem') e.media = Math.round(e.dist / ((e.fim - e.inicio) / 3600000));
+        out.push(e);
+      });
+    }
+    return out;
   },
   async viagens(dias) {
     const corte = new Date(); corte.setHours(0, 0, 0, 0); corte.setDate(corte.getDate() - dias);
     const fimDia = new Date(corte); fimDia.setDate(fimDia.getDate() + 1);
-    return this.viagens.filter((x) => dias === 7 ? x.inicio >= corte.getTime() : (x.inicio >= corte.getTime() && x.inicio < fimDia.getTime()));
+    const ref = (x) => x.tipo === 'pernoite' ? x.fim : x.inicio;
+    return this.lista.filter((x) => dias === 7 ? ref(x) >= corte.getTime() : (ref(x) >= corte.getTime() && ref(x) < fimDia.getTime()))
+      .sort((a, b) => (ref(b) - (b.tipo === 'pernoite' ? 1 : 0)) - (ref(a) - (a.tipo === 'pernoite' ? 1 : 0)));
   }
 };
 
@@ -658,13 +695,40 @@ $('a-opcoes').addEventListener('click', (e) => {
   cfg.notif[k] = !cfg.notif[k]; store.set('notif', cfg.notif); renderAlertas();
 });
 
+const IC_H = {
+  viagem: ['ci', 'M5 12h14M13 6l6 6-6 6'],
+  parada: ['ci', 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 7.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z'],
+  pernoite: ['la', 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z']
+};
 async function renderHistorico() {
   const l = $('h-lista'); l.innerHTML = '<div class="vazio">Carregando…</div>';
   let vs = [];
   try { vs = await fonte().viagens(diaHist); } catch (e) { l.innerHTML = '<div class="vazio">Não foi possível carregar o histórico.</div>'; return; }
-  const dist = vs.reduce((s, v) => s + v.dist, 0), tempo = vs.reduce((s, v) => s + (v.fim - v.inicio), 0), max = vs.reduce((s, v) => Math.max(s, v.max), 0);
-  $('h-resumo').innerHTML = [['Distância', dist.toFixed(0) + ' km'], ['Tempo', dur(tempo)], ['Vel. máx.', max + ' km/h']].map(([a, b]) => '<div class="card"><small>' + a + '</small><b class="orb" style="font-size:15px">' + b + '</b></div>').join('');
-  l.innerHTML = vs.length ? vs.map((v) => '<div class="item"><span style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:52px"><b style="font-size:14px">' + hora(v.inicio) + '</b><span style="font-size:11px;color:var(--mu)">' + hora(v.fim) + '</span></span><span style="width:1px;align-self:stretch;background:var(--ln)"></span><span class="tx"><b>' + esc(v.rota) + '</b><span>' + v.dist.toFixed(1).replace('.', ',') + ' km · ' + dur(v.fim - v.inicio) + ' · máx. ' + v.max + ' km/h</span></span></div>').join('') : '<div class="vazio">Nenhuma viagem neste período.</div>';
+  const mov = vs.filter((v) => !v.tipo || v.tipo === 'viagem');
+  const dist = mov.reduce((s, v) => s + v.dist, 0), tempo = mov.reduce((s, v) => s + (v.fim - v.inicio), 0), max = mov.reduce((s, v) => Math.max(s, v.max), 0);
+  $('h-resumo').innerHTML = [['Distância', dist.toFixed(0) + ' km'], ['Em movimento', dur(tempo)], ['Vel. máx.', max + ' km/h']].map(([a, b]) => '<div class="card"><small>' + a + '</small><b class="orb" style="font-size:15px">' + b + '</b></div>').join('');
+  const svg = (d) => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+  const rel = (d) => { const o = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 864e5); return o === 0 ? 'HOJE' : o === 1 ? 'ONTEM' : new Date(d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace('.', '').toUpperCase(); };
+  let ult = '', html = '';
+  vs.forEach((v) => {
+    const t = v.tipo || 'viagem', r = t === 'pernoite' ? v.fim : v.inicio, g = new Date(r).toDateString();
+    if (diaHist === 7 && g !== ult) html += '<div class="sec" style="margin:14px 4px 2px;font-size:11px">' + rel(r) + '</div>';
+    ult = g;
+    const tempoCol = '<span style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:46px"><b style="font-size:14px">' + hora(v.inicio) + '</b><span style="font-size:11px;color:var(--mu)">' + (v.aberto ? 'agora' : hora(v.fim)) + '</span></span><span style="width:1px;align-self:stretch;background:var(--ln)"></span>';
+    let corpo;
+    if (t === 'viagem') {
+      const km = v.dist.toFixed(1).replace('.', ',') + ' km';
+      const info = v.rota ? v.rota : esc(v.de) + ' → ' + esc(v.para);
+      corpo = '<b>Viagem · ' + km + ' · ' + dur(v.fim - v.inicio) + '</b><span>' + (v.rota ? esc(v.rota) : esc(v.de) + ' → ' + esc(v.para)) + '</span><span>' + (v.via ? 'via ' + esc(v.via) + ' · ' : '') + 'máx. ' + v.max + ' km/h' + (v.media ? ' · média ' + v.media + ' km/h' : '') + '</span>' + (v.excesso ? '<span style="color:var(--la)">⚠ Excesso de velocidade: ' + v.max + ' km/h (' + esc(v.excesso) + ')</span>' : '');
+    } else if (t === 'parada') {
+      corpo = '<b>Parado · ' + dur(v.fim - v.inicio) + (v.aberto ? ' (em andamento)' : '') + '</b><span>' + esc(v.local) + '</span><span>Ignição desligada</span>';
+    } else {
+      corpo = '<b>Pernoite · ' + dur(v.fim - v.inicio) + (v.aberto ? ' (em andamento)' : '') + '</b><span>' + esc(v.local) + '</span><span>Ignição desligada · bateria 12,6 V</span>';
+    }
+    const [c, ic] = IC_H[t];
+    html += '<div class="item">' + tempoCol + '<span class="ic ' + (v.excesso ? 'la' : c) + '">' + svg(ic) + '</span><span class="tx">' + corpo + '</span></div>';
+  });
+  l.innerHTML = html || '<div class="vazio">Nenhuma viagem neste período.</div>';
 }
 document.querySelectorAll('.filtros button').forEach((b) => b.addEventListener('click', () => {
   diaHist = Number(b.dataset.dia);
