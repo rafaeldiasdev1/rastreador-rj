@@ -1,6 +1,6 @@
 // Guarda a "casca" do app para abrir rápido e funcionar sem sinal.
 // Dados do rastreador (API do servidor) nunca ficam em cache.
-const CACHE = 'rastreador-rj-v8';
+const CACHE = 'rastreador-rj-v9';
 const CASCA = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CASCA))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
