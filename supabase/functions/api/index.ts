@@ -1,6 +1,7 @@
 // RJ Domótica · API da plataforma
 // Rotas:
 //   POST /api/admin       ações do painel (exige login de administrador)
+//   POST /api/pre-cadastro  interessados se cadastram pelo app (pública, com limites)
 //   POST /api/rotina      rotina diária: gera cobranças, lembra, bloqueia (chamada pelo agendador)
 //   POST /api/webhook-mp  avisos de pagamento do Mercado Pago
 // Integrações ligam sozinhas quando os segredos existem. Sem eles, tudo roda em modo "simulado".
@@ -71,6 +72,7 @@ async function traccarAcesso(cli: Obj, liberado: boolean) {
 async function sincronizar(cliente_id: string, senha?: string) {
   if (!traccarOn()) return { ok: false, aviso: "Servidor do rastreador ainda não configurado. Os dados ficam salvos e são enviados quando ele estiver no ar." };
   const { data: cli } = await db.from("clientes").select("*").eq("id", cliente_id).single();
+  if (cli.status === "pre_cadastro") return { ok: false, aviso: "Este é um pré-cadastro. Complete os dados e marque como Ativo para criar o login no rastreador." };
   const { data: veics } = await db.from("veiculos").select("*").eq("cliente_id", cliente_id);
   const login = cli.login_app || cli.email;
   let uid = cli.traccar_user_id;
@@ -313,7 +315,7 @@ async function rotina() {
   const n = Number(cfg.dias_uteis_bloqueio ?? 2);
   const rel = { geradas: 0, lembretes: 0, vencidas: 0, bloqueados: 0, pagos_conferidos: 0, erros: [] as string[] };
 
-  const { data: clientes } = await db.from("clientes").select("*").neq("status", "cancelado");
+  const { data: clientes } = await db.from("clientes").select("*").in("status", ["ativo", "bloqueado"]);
   for (const cli of clientes || []) {
     try {
       // 1. gera a cobrança do mês atual e do próximo quando entra na janela de antecedência
@@ -376,6 +378,51 @@ async function webhookMP(req: Request) {
   return json({ ok: true, status: p.status });
 }
 
+// ---------------- pré-cadastro (rota pública, usada pelo app) ----------------
+const PRECO_CHEIO = 64.9, PRECO_PROMO = 54.9; // promoção travada para quem se pré-cadastra
+const TIPOS_VEIC = ["carro", "moto", "caminhao", "outros"];
+const soDig = (s: unknown) => String(s ?? "").replace(/\D/g, "");
+const limpa = (s: unknown, max: number) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+async function preCadastro(req: Request) {
+  const b: Obj = await req.json().catch(() => ({}));
+  if (b.site) return json({ ok: true }); // campo-isca: robô preencheu, finge que deu certo
+  const nome = limpa(b.nome, 100), email = limpa(b.email, 120).toLowerCase();
+  let zap = soDig(b.whatsapp); if (zap.length === 10 || zap.length === 11) zap = "55" + zap;
+  if (nome.length < 3 || !/\S+\s+\S+/.test(nome)) return json({ erro: "Informe seu nome completo." }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ erro: "E-mail inválido." }, 400);
+  if (zap.length < 12 || zap.length > 13) return json({ erro: "WhatsApp inválido: use DDD + número." }, 400);
+  if (b.aceite !== true) return json({ erro: "Marque a autorização para contato." }, 400);
+  const lista: Obj[] = Array.isArray(b.veiculos) ? b.veiculos.slice(0, 5) : [];
+  const veics = lista.map((v) => ({
+    tipo: TIPOS_VEIC.includes(v?.tipo) ? v.tipo : "carro", marca: limpa(v?.marca, 40), modelo: limpa(v?.modelo, 40),
+    ano: Number(v?.ano) >= 1950 && Number(v?.ano) <= new Date().getFullYear() + 1 ? Number(v.ano) : null,
+    placa: limpa(v?.placa, 8).toUpperCase().replace(/[^A-Z0-9]/g, "") || null,
+  })).filter((v) => v.marca || v.modelo);
+  if (!veics.length) return json({ erro: "Informe pelo menos um veículo (marca e modelo)." }, 400);
+  if (veics.some((v) => !v.marca || !v.modelo)) return json({ erro: "Preencha marca e modelo de cada veículo." }, 400);
+
+  // limite de segurança: no máximo 30 pré-cadastros por hora no total
+  const desde = new Date(Date.now() - 3600e3).toISOString();
+  const { count: recentes } = await db.from("clientes").select("id", { count: "exact", head: true }).eq("status", "pre_cadastro").gte("created_at", desde);
+  if ((recentes || 0) >= 30) return json({ erro: "Muitos pedidos agora. Tente de novo em alguns minutos." }, 429);
+
+  // quem já está na base não duplica (resposta igual, sem revelar nada)
+  const { count: jaTem } = await db.from("clientes").select("id", { count: "exact", head: true }).eq("email", email);
+  if (jaTem) return json({ ok: true, valor: PRECO_PROMO });
+
+  const obs = `Pré-cadastro pelo app. Promoção travada: ${brl(PRECO_PROMO)}/mês (preço cheio ${brl(PRECO_CHEIO)}).`;
+  const { data: cli, error } = await db.from("clientes").insert({
+    nome, email, whatsapp: zap, tipo_pessoa: "PF", valor_mensal: PRECO_PROMO, dia_vencimento: 10, status: "pre_cadastro", observacoes: obs,
+  }).select().single();
+  if (error || !cli) throw new Error("Não foi possível salvar o pré-cadastro.");
+  for (const v of veics) {
+    let r = await db.from("veiculos").insert({ cliente_id: cli.id, ...v, ativo: true });
+    if (r.error && v.placa) r = await db.from("veiculos").insert({ cliente_id: cli.id, ...v, placa: null, ativo: true }); // placa já existe: grava sem ela
+  }
+  await registrar(cli.id, "pre_cadastro", `Pré-cadastro recebido pelo app (${veics.length} veículo(s)). Autorizou contato. Promoção ${brl(PRECO_PROMO)}/mês.`, "app");
+  return json({ ok: true, valor: PRECO_PROMO });
+}
+
 // ---------------- ações do painel ----------------
 async function adminDe(req: Request) {
   const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
@@ -413,6 +460,7 @@ async function acaoAdmin(req: Request) {
     }
     case "gerar_cobranca": {
       const c = await cliente(b.cliente_id);
+      if (c.status === "pre_cadastro") throw new Error("Este cliente ainda é um pré-cadastro. Complete os dados e marque como Ativo antes de gerar cobrança.");
       const comp = b.competencia ? competenciaDe(b.competencia) : (() => {
         const h = hojeSP(), atual = competenciaDe(h);
         return vencimentoDe(atual, c.dia_vencimento) >= h ? atual : competenciaDe(addDias(atual, 32));
@@ -449,7 +497,7 @@ async function acaoAdmin(req: Request) {
         if (c.traccar_user_id) await traccar(`/api/users/${c.traccar_user_id}`, { method: "DELETE" }).catch(() => null);
       }
       await db.from("clientes").delete().eq("id", c.id);
-      await registrar(null, "cliente_excluido", `${c.nome} (${c.documento}) excluído`, autor);
+      await registrar(null, "cliente_excluido", `${c.nome} (${c.documento || c.status}) excluído`, autor);
       return json({ ok: true });
     }
     case "rodar_rotina":
@@ -465,6 +513,7 @@ Deno.serve(async (req) => {
   try {
     if (rota === "admin") return await acaoAdmin(req);
     if (rota === "webhook-mp") return await webhookMP(req);
+    if (rota === "pre-cadastro") return await preCadastro(req);
     if (rota === "rotina") {
       const { data } = await db.from("segredos_internos").select("valor").eq("chave", "cron").single();
       if (!data || req.headers.get("x-cron-secret") !== data.valor) return json({ erro: "não autorizado" }, 401);

@@ -177,6 +177,7 @@ async function rodar(btn, fn) {
   try { return await fn(); } catch (e) { toast(e.message, true); } finally { if (btn) { btn.disabled = false; btn.innerHTML = t; } }
 }
 function situacao(c) {
+  if (c.status === 'pre_cadastro') return '<span class="badge b-la">Pré-cadastro</span>';
   if (c.status === 'cancelado') return '<span class="badge b-mu">Cancelado</span>';
   if (c.status === 'bloqueado') return '<span class="badge b-vm">Bloqueado</span>';
   if (c.situacao === 'inadimplente') return '<span class="badge b-la">Em atraso · ' + c.dias_uteis_atraso + ' dia(s) útil(eis)</span>';
@@ -251,7 +252,7 @@ async function telaInicio() {
     sb.from('veiculos').select('id', { count: 'exact', head: true }).eq('ativo', true),
   ]).catch((e) => { m.querySelector('.vazio').textContent = e.message; return []; });
   if (!clis || !$('#b-rotina')) return;
-  const ativos = clis.filter((c) => c.status === 'ativo').length, bloq = clis.filter((c) => c.status === 'bloqueado').length;
+  const pre = clis.filter((c) => c.status === 'pre_cadastro').length, ativos = clis.filter((c) => c.status === 'ativo').length, bloq = clis.filter((c) => c.status === 'bloqueado').length;
   const inad = clis.filter((c) => c.situacao === 'inadimplente');
   const pagosMes = cobs.filter((c) => c.status === 'pago' && c.pago_em && c.pago_em.slice(0, 7) === h.slice(0, 7));
   const recebido = pagosMes.reduce((s, c) => s + Number(c.valor_pago || c.valor), 0);
@@ -261,6 +262,7 @@ async function telaInicio() {
   m.innerHTML = `<div class="cab"><h1>Visão geral</h1><button class="btn2" id="b-rotina">Rodar rotina de cobrança agora</button></div>
   <div class="cards">
     <div class="card"><small>Clientes ativos</small><b>${ativos}</b></div>
+    <div class="card"><small>Pré-cadastros</small><b style="color:var(--la)">${pre}</b></div>
     <div class="card"><small>Bloqueados</small><b style="color:var(--vm)">${bloq}</b></div>
     <div class="card"><small>Em atraso</small><b style="color:var(--la)">${inad.length}</b></div>
     <div class="card"><small>Veículos rastreados</small><b>${veics.count ?? 0}</b></div>
@@ -282,7 +284,7 @@ async function telaClientes() {
   const m = $('#main');
   m.innerHTML = `<div class="cab"><h1>Clientes</h1><button class="btn" id="b-novo">+ Novo cliente</button></div>
   <div class="busca"><input id="q" placeholder="Buscar por nome, CPF/CNPJ, placa ou telefone" style="flex:1 1 280px" aria-label="Buscar">
-  <select id="fs" aria-label="Filtrar situação"><option value="">Todas as situações</option><option value="em_dia">Em dia</option><option value="a_vencer">A vencer</option><option value="inadimplente">Em atraso</option><option value="bloqueado">Bloqueados</option><option value="cancelado">Cancelados</option></select></div>
+  <select id="fs" aria-label="Filtrar situação"><option value="">Todas as situações</option><option value="em_dia">Em dia</option><option value="a_vencer">A vencer</option><option value="inadimplente">Em atraso</option><option value="pre_cadastro">Pré-cadastros</option><option value="bloqueado">Bloqueados</option><option value="cancelado">Cancelados</option></select></div>
   <div class="painel" style="padding:4px 8px"><div class="rolagem" id="lista"><div class="vazio">Carregando…</div></div></div>`;
   $('#b-novo').onclick = () => formCliente();
   let clis = [], placas = {};
@@ -295,6 +297,7 @@ async function telaClientes() {
   const desenhar = () => {
     const q = $('#q').value.trim().toLowerCase(), qd = so(q), fs = $('#fs').value;
     const l = clis.filter((c) => {
+      if (fs === 'pre_cadastro' && c.status !== 'pre_cadastro') return false;
       if (fs === 'bloqueado' && c.status !== 'bloqueado') return false;
       if (fs === 'cancelado' && c.status !== 'cancelado') return false;
       if (['em_dia', 'a_vencer', 'inadimplente'].includes(fs) && (c.situacao !== fs || c.status === 'bloqueado')) return false;
@@ -329,7 +332,7 @@ function formCliente(c) {
     <div class="sec">MENSALIDADE</div>
     <label class="campo req c4"><span>Valor mensal (R$)</span><input name="valor_mensal" required inputmode="decimal" placeholder="0,00" value="${c.valor_mensal ? String(c.valor_mensal).replace('.', ',') : ''}"></label>
     <label class="campo req c4"><span>Dia de vencimento</span><select name="dia_vencimento">${Array.from({ length: 28 }, (_, i) => `<option ${c.dia_vencimento == i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></label>
-    <label class="campo c4"><span>Situação do contrato</span><select name="status" ${novo ? 'disabled' : ''}><option value="ativo" ${c.status !== 'cancelado' ? 'selected' : ''}>Ativo</option><option value="cancelado" ${c.status === 'cancelado' ? 'selected' : ''}>Cancelado (para de cobrar)</option></select></label>
+    <label class="campo c4"><span>Situação do contrato</span><select name="status" ${novo ? 'disabled' : ''}>${c.status === 'pre_cadastro' ? '<option value="pre_cadastro" selected>Pré-cadastro (ainda não é cliente)</option><option value="ativo">Ativo (virou cliente)</option><option value="cancelado">Descartado</option>' : `<option value="ativo" ${c.status !== 'cancelado' ? 'selected' : ''}>Ativo</option><option value="cancelado" ${c.status === 'cancelado' ? 'selected' : ''}>Cancelado (para de cobrar)</option>`}</select></label>
     <div class="sec">ACESSO AO APP</div>
     <label class="campo c6"><span>Login do app (e-mail)</span><input name="login_app" type="email" placeholder="igual ao e-mail do cliente" value="${esc(c.login_app)}"></label>
     <label class="campo c6"><span>${novo || !c.traccar_user_id ? 'Senha inicial' : 'Nova senha (deixe vazio para manter)'}</span><div style="display:flex;gap:8px"><input name="senha" style="flex:1" autocomplete="new-password" minlength="6"><button type="button" class="btn2" id="b-gerar">Gerar</button></div></label>
@@ -355,24 +358,25 @@ function formCliente(c) {
     const v = Object.fromEntries(new FormData(f).entries());
     const doc = so(v.documento);
     if (!v.nome.trim()) return err.textContent = 'Informe o nome.';
-    if (v.tipo_pessoa === 'PF' ? !cpfValido(doc) : !cnpjValido(doc)) return err.textContent = v.tipo_pessoa === 'PF' ? 'CPF inválido.' : 'CNPJ inválido.';
+    const pre = c.status === 'pre_cadastro' && v.status === 'pre_cadastro';
+    if ((!pre || doc) && (v.tipo_pessoa === 'PF' ? !cpfValido(doc) : !cnpjValido(doc))) return err.textContent = v.tipo_pessoa === 'PF' ? 'CPF inválido.' : 'CNPJ inválido.';
     if (!/^\S+@\S+\.\S+$/.test(v.email)) return err.textContent = 'E-mail inválido.';
     let zap = so(v.whatsapp); if (zap.length === 10 || zap.length === 11) zap = '55' + zap;
     if (zap.length < 12) return err.textContent = 'WhatsApp inválido: use DDD + número.';
-    for (const k of ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf']) if (!String(v[k] || '').trim()) return err.textContent = 'Preencha o endereço completo (usado no boleto).';
+    if (!pre) for (const k of ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf']) if (!String(v[k] || '').trim()) return err.textContent = 'Preencha o endereço completo (usado no boleto).';
     const valor = Number(String(v.valor_mensal).replace(/\./g, '').replace(',', '.'));
     if (!(valor > 0)) return err.textContent = 'Informe o valor da mensalidade.';
     if (v.senha && v.senha.length < 6) return err.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
-    const dados = { nome: v.nome.trim(), tipo_pessoa: v.tipo_pessoa, documento: doc, email: v.email.trim().toLowerCase(), whatsapp: zap, telefone2: v.telefone2 || null,
+    const dados = { nome: v.nome.trim(), tipo_pessoa: v.tipo_pessoa, documento: doc || null, email: v.email.trim().toLowerCase(), whatsapp: zap, telefone2: v.telefone2 || null,
       cep: so(v.cep), logradouro: v.logradouro.trim(), numero: v.numero.trim(), complemento: v.complemento || null, bairro: v.bairro.trim(), cidade: v.cidade.trim(), uf: v.uf.trim().toUpperCase(),
       valor_mensal: valor, dia_vencimento: Number(v.dia_vencimento), login_app: (v.login_app || v.email).trim().toLowerCase(), escuta_liberada: !!v.escuta_liberada, observacoes: v.observacoes || null };
-    if (!novo) dados.status = v.status === 'cancelado' ? 'cancelado' : (c.status === 'bloqueado' ? 'bloqueado' : 'ativo');
+    if (!novo) dados.status = v.status === 'pre_cadastro' ? 'pre_cadastro' : v.status === 'cancelado' ? 'cancelado' : (c.status === 'bloqueado' ? 'bloqueado' : 'ativo');
     const b = f.querySelector('[type=submit]');
     await rodar(b, async () => {
       const salvo = novo ? chk(await sb.from('clientes').insert(dados).select().single()) : chk(await sb.from('clientes').update(dados).eq('id', c.id).select().single());
-      await sb.from('historico').insert({ cliente_id: salvo.id, tipo: novo ? 'cadastro' : 'edicao', detalhe: novo ? 'Cliente cadastrado' : 'Dados do cliente atualizados', autor: sessao.user.email });
+      await sb.from('historico').insert({ cliente_id: salvo.id, tipo: novo ? 'cadastro' : 'edicao', detalhe: novo ? 'Cliente cadastrado' : (c.status === 'pre_cadastro' && dados.status === 'ativo' ? 'Pré-cadastro convertido em cliente' : 'Dados do cliente atualizados'), autor: sessao.user.email });
       let aviso = '';
-      try { const s = await api('sincronizar', { cliente_id: salvo.id, senha: v.senha || undefined }); if (!s.ok) aviso = ' ' + s.aviso; } catch (er) { aviso = ' Atenção: ' + er.message; }
+      if (dados.status !== 'pre_cadastro') { try { const s = await api('sincronizar', { cliente_id: salvo.id, senha: v.senha || undefined }); if (!s.ok) aviso = ' ' + s.aviso; } catch (er) { aviso = ' Atenção: ' + er.message; } }
       fecharModal();
       if (v.senha) mostrarAcesso(dados.login_app, v.senha);
       toast((novo ? 'Cliente cadastrado.' : 'Alterações salvas.') + aviso, !!aviso && aviso.includes('Atenção'));
@@ -403,7 +407,8 @@ async function telaCliente(id) {
     ]);
   } catch (e) { m.innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; return; }
   m.innerHTML = `<div class="cab"><div><a href="#clientes" class="pq" style="text-decoration:none">← Clientes</a><h1 style="margin-top:6px">${esc(c.nome)}</h1><div style="margin-top:8px">${situacao(c)} ${c.traccar_user_id ? '<span class="badge b-ci">Login no app criado</span>' : '<span class="badge b-mu">Login no app pendente</span>'} ${c.escuta_liberada ? '<span class="badge b-ci">Escuta contratada</span>' : ''}</div></div>
-  <div class="acoes"><button class="btn2" id="b-edit">Editar</button>${c.status === 'bloqueado' ? '<button class="btn" id="b-desb">Desbloquear acesso</button>' : c.status === 'ativo' ? '<button class="btn2 btn-vm" id="b-bloq">Bloquear acesso</button>' : ''}<button class="btn2" id="b-sinc" title="Reenvia login e veículos ao servidor do rastreador">Sincronizar com o rastreador</button></div></div>
+  <div class="acoes">${c.status === 'pre_cadastro' ? '<button class="btn" id="b-conv">Converter em cliente</button>' : ''}<button class="btn2" id="b-edit">Editar</button>${c.status === 'bloqueado' ? '<button class="btn" id="b-desb">Desbloquear acesso</button>' : c.status === 'ativo' ? '<button class="btn2 btn-vm" id="b-bloq">Bloquear acesso</button>' : ''}${c.status === 'pre_cadastro' ? '' : '<button class="btn2" id="b-sinc" title="Reenvia login e veículos ao servidor do rastreador">Sincronizar com o rastreador</button>'}</div></div>
+  ${c.status === 'pre_cadastro' ? `<div class="painel" style="border-color:rgba(255,138,61,.5)"><b style="color:var(--la)">Pré-cadastro</b> <span class="mu">veio pelo app com a promoção de ${brl(c.valor_mensal)}/mês travada. Fale com o cliente pelo WhatsApp e, ao fechar, use <b>Converter em cliente</b> para completar CPF, endereço e criar o login.</span></div>` : ''}
   ${c.status === 'bloqueado' ? `<div class="painel" style="border-color:rgba(255,107,107,.45)"><b style="color:var(--vm)">Acesso bloqueado</b> <span class="mu">desde ${dataHora(c.bloqueado_em)} · ${esc(c.motivo_bloqueio || '')}</span></div>` : ''}
   <div class="painel"><div class="det">
     <div><small>CPF/CNPJ</small>${fmtDoc(c.documento)}</div><div><small>E-mail</small>${esc(c.email)}</div><div><small>WhatsApp</small>${fmtFone(c.whatsapp)}</div><div><small>Outro telefone</small>${esc(c.telefone2 || '—')}</div>
@@ -415,12 +420,13 @@ async function telaCliente(id) {
   <div id="aba"></div>
   <div style="margin-top:28px;text-align:right"><button class="btn2 btn-vm mini" id="b-excluir">Excluir cliente</button></div>`;
   $('#b-edit').onclick = async () => formCliente(chk(await sb.from('clientes').select('*').eq('id', id).single()));
-  $('#b-sinc').onclick = (e) => rodar(e.currentTarget, async () => { const s = await api('sincronizar', { cliente_id: id }); toast(s.ok ? 'Sincronizado: ' + s.resultados.join(' · ') : s.aviso, !s.ok); });
+  if ($('#b-conv')) $('#b-conv').onclick = $('#b-edit').onclick;
+  if ($('#b-sinc')) $('#b-sinc').onclick = (e) => rodar(e.currentTarget, async () => { const s = await api('sincronizar', { cliente_id: id }); toast(s.ok ? 'Sincronizado: ' + s.resultados.join(' · ') : s.aviso, !s.ok); });
   if ($('#b-bloq')) $('#b-bloq').onclick = async () => { if (await confirmar('Bloquear acesso?', 'O cliente deixa de conseguir entrar no app até ser desbloqueado.', 'Bloquear', true)) rodar(null, async () => { await api('bloquear', { cliente_id: id, motivo: 'Bloqueio manual' }); toast('Acesso bloqueado.'); telaCliente(id); }); };
   if ($('#b-desb')) $('#b-desb').onclick = (e) => rodar(e.currentTarget, async () => { await api('desbloquear', { cliente_id: id }); toast('Acesso liberado.'); telaCliente(id); });
   $('#b-excluir').onclick = async () => { if (await confirmar('Excluir ' + c.nome + '?', 'Apaga o cliente, os veículos, as cobranças e o login do app. Não dá para desfazer. Para só parar de cobrar, edite e marque o contrato como cancelado.', 'Excluir definitivamente', true)) rodar(null, async () => { await api('excluir_cliente', { cliente_id: id }); toast('Cliente excluído.'); location.hash = 'clientes'; }); };
   const abas = {
-    veiculos: () => `<div class="painel" style="padding:4px 8px">${veics.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Veículo</th><th>Placa</th><th>Rastreador</th><th>Chip</th><th>Escuta</th><th>Situação</th><th></th></tr></thead><tbody>${veics.map((v) => `<tr><td><b>${esc(v.marca)} ${esc(v.modelo)}</b><div class="mu pq">${esc([TIPOS_VEIC[v.tipo] || 'Carro', v.ano, v.cor].filter(Boolean).join(' · '))}</div></td><td><code>${esc(v.placa)}</code></td><td>${esc(v.modelo_rastreador || '')}<div class="mu pq">IMEI ${esc(v.imei || '—')}</div></td><td>${esc(v.chip_numero ? fmtFone(v.chip_numero) : '—')}<div class="mu pq">${esc(v.chip_operadora || '')}</div></td><td>${v.escuta && c.escuta_liberada ? '<span class="badge b-ci">Liberada</span>' : '<span class="badge b-mu">Não</span>'}</td><td>${v.ativo ? (v.traccar_device_id ? '<span class="badge b-ok">No rastreador</span>' : '<span class="badge b-la">Pendente</span>') : '<span class="badge b-mu">Inativo</span>'}</td><td><button class="btn2 mini" data-v="${v.id}">Editar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhum veículo cadastrado.</div>'}</div><button class="btn" id="b-novo-v">+ Adicionar veículo</button>`,
+    veiculos: () => `<div class="painel" style="padding:4px 8px">${veics.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Veículo</th><th>Placa</th><th>Rastreador</th><th>Chip</th><th>Escuta</th><th>Situação</th><th></th></tr></thead><tbody>${veics.map((v) => `<tr><td><b>${esc(v.marca)} ${esc(v.modelo)}</b><div class="mu pq">${esc([TIPOS_VEIC[v.tipo] || 'Carro', v.ano, v.cor].filter(Boolean).join(' · '))}</div></td><td><code>${esc(v.placa || '—')}</code></td><td>${esc(v.modelo_rastreador || '')}<div class="mu pq">IMEI ${esc(v.imei || '—')}</div></td><td>${esc(v.chip_numero ? fmtFone(v.chip_numero) : '—')}<div class="mu pq">${esc(v.chip_operadora || '')}</div></td><td>${v.escuta && c.escuta_liberada ? '<span class="badge b-ci">Liberada</span>' : '<span class="badge b-mu">Não</span>'}</td><td>${v.ativo ? (v.traccar_device_id ? '<span class="badge b-ok">No rastreador</span>' : '<span class="badge b-la">Pendente</span>') : '<span class="badge b-mu">Inativo</span>'}</td><td><button class="btn2 mini" data-v="${v.id}">Editar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhum veículo cadastrado.</div>'}</div><button class="btn" id="b-novo-v">+ Adicionar veículo</button>`,
     cobrancas: () => `<div class="painel" style="padding:4px 8px">${cobs.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Referência</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th>Pagamento</th><th></th></tr></thead><tbody>${cobs.map((x) => linhaCobranca(x)).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma cobrança ainda. Elas são geradas automaticamente perto do vencimento.</div>'}</div><button class="btn" id="b-gerar-c">Gerar cobrança agora</button>`,
     mensagens: () => `<div class="painel" style="padding:4px 8px">${msgs.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Quando</th><th>Canal</th><th>Tipo</th><th>Status</th><th>Detalhe</th></tr></thead><tbody>${msgs.map((x) => linhaMsg(x)).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma mensagem enviada.</div>'}</div>`,
     historico: () => `<div class="painel" style="padding:4px 8px">${hist.length ? `<div class="rolagem"><table class="tab"><tbody>${hist.map((x) => `<tr><td class="mu pq" style="white-space:nowrap">${dataHora(x.created_at)}</td><td>${esc(x.detalhe)}</td><td class="mu pq">${esc(x.autor || '')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Sem histórico.</div>'}</div>`,

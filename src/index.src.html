@@ -109,6 +109,26 @@ nav.barra.esconde{display:none}
 .frota{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto}
 .frota button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg);border:1px solid var(--ln);border-radius:16px;padding:12px 14px;color:var(--tx)}
 .frota button.sel{border-color:rgba(56,214,245,.6);background:rgba(56,214,245,.08)}
+.promo{display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:20px;border:1px solid rgba(56,214,245,.45);background:linear-gradient(135deg,rgba(56,214,245,.14),rgba(56,214,245,.03));color:var(--tx);text-align:left;width:100%}
+.promo b.orb{font-size:13px;letter-spacing:2px;color:var(--ci)}
+.promo .pr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.promo .pr s{color:var(--mu);font-size:14px}
+.promo .pr strong{font-family:Orbitron,sans-serif;font-size:26px;color:var(--tx)}
+.promo .pr small{color:var(--mu);font-size:12px}
+.promo span{font-size:13px;color:#b8bec6}
+.campo select{height:52px;border-radius:16px;border:1px solid #2c313a;background:var(--sf);color:var(--tx);padding:0 12px;font-size:15px}
+.campo input:focus,.campo select:focus{outline:2px solid rgba(56,214,245,.5);border-color:var(--ci)}
+.vcard{background:var(--sf2);border:1px solid var(--ln);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.vcard .lin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.vcard .campo{min-width:0}
+.vcard input,.vcard select{width:100%;min-width:0}
+.vcard h2{margin:0;font-size:13px;color:var(--ci);font-family:Orbitron,sans-serif;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+.vcard h2 button{background:none;border:none;color:var(--mu);font-size:12px;padding:4px}
+.aceite{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#b8bec6;line-height:1.5}
+.aceite input{width:22px;height:22px;margin-top:1px;accent-color:#38d6f5;flex:none}
+.iscas{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.ok-big{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:40px 8px}
+.ok-big .tk{width:72px;height:72px;border-radius:36px;background:rgba(56,214,245,.15);border:1px solid rgba(56,214,245,.5);display:flex;align-items:center;justify-content:center;color:var(--ci);font-size:36px}
 </style>
 </head>
 <body>
@@ -130,6 +150,41 @@ nav.barra.esconde{display:none}
     <button class="btn" type="submit">ENTRAR</button>
     <button class="btn2" type="button" id="l-ajustes">Ajustes de conexão</button>
   </form>
+  <div style="padding:22px 0 0">
+    <button class="promo" type="button" id="l-precad" aria-label="Fazer pré-cadastro com promoção">
+      <b class="orb">PRÉ-CADASTRO · PROMOÇÃO</b>
+      <span class="pr"><s>R$ 64,90</s><strong>R$ 54,90</strong><small>/mês, preço travado</small></span>
+      <span>Ainda não é cliente? Cadastre seu interesse e garanta o valor promocional. Toque para começar →</span>
+    </button>
+  </div>
+</section>
+
+<!-- PRÉ-CADASTRO -->
+<section class="tela" id="t-precad" aria-label="Pré-cadastro">
+  <div class="cab">
+    <button class="btn2" type="button" id="pc-voltar" style="height:44px;width:auto;align-self:flex-start;padding:0 16px">← Voltar</button>
+    <h1>Pré-cadastro</h1>
+    <div class="promo" style="cursor:default"><b class="orb">PROMOÇÃO PARA QUEM SE CADASTRA</b>
+      <span class="pr"><s>R$ 64,90</s><strong>R$ 54,90</strong><small>/mês · 15% de desconto</small></span>
+      <span>O valor promocional fica travado para você. Sem compromisso agora: entramos em contato pelo WhatsApp para combinar a instalação.</span></div>
+  </div>
+  <form id="f-precad" class="form" autocomplete="on" novalidate>
+    <label class="campo">Nome completo<input id="pc-nome" autocomplete="name" placeholder="Seu nome e sobrenome" maxlength="100"></label>
+    <label class="campo">E-mail<input id="pc-email" type="email" autocomplete="email" inputmode="email" placeholder="seu@email.com" maxlength="120"></label>
+    <label class="campo">WhatsApp<input id="pc-zap" type="tel" autocomplete="tel" inputmode="tel" placeholder="(21) 99999-9999" maxlength="20"></label>
+    <div id="pc-veics" style="display:flex;flex-direction:column;gap:12px"></div>
+    <button class="btn2" type="button" id="pc-add">+ Adicionar outro veículo</button>
+    <div class="iscas" aria-hidden="true"><label>Não preencha<input id="pc-site" tabindex="-1" autocomplete="off"></label></div>
+    <label class="aceite"><input type="checkbox" id="pc-aceite"><span>Autorizo a RJ Domótica a entrar em contato comigo por WhatsApp e e-mail sobre o rastreamento veicular. Uso seus dados só para isso.</span></label>
+    <div class="erro" id="pc-erro" role="alert"></div>
+    <button class="btn" type="submit" id="pc-enviar">QUERO A PROMOÇÃO</button>
+  </form>
+  <div id="pc-ok" class="ok-big" style="display:none">
+    <div class="tk" aria-hidden="true">✓</div>
+    <h1>Pré-cadastro recebido!</h1>
+    <p class="nota" style="padding:0;font-size:14px;color:#b8bec6">Seu valor promocional de <b style="color:var(--tx)">R$ 54,90/mês</b> está garantido. Em breve falamos com você pelo WhatsApp.</p>
+    <button class="btn2" type="button" id="pc-fim" style="width:100%">Voltar ao início</button>
+  </div>
 </section>
 
 <!-- PAINEL -->
@@ -655,11 +710,13 @@ $('b-escuta').addEventListener('click', () => {
 /* ============ rotas ============ */
 function rota() {
   let h = (location.hash || '').slice(1);
-  if (!logado && h !== 'ajustes') h = 'entrar';
+  if (!logado && h !== 'ajustes' && h !== 'precadastro') h = 'entrar';
   if (logado && (h === 'entrar' || !h)) h = 'painel';
-  if (!['entrar', 'painel', 'historico', 'alertas', 'ajustes'].includes(h)) h = 'painel';
-  document.querySelectorAll('.tela').forEach((t) => t.classList.toggle('ativa', t.id === 't-' + h));
-  $('barra').classList.toggle('esconde', h === 'entrar' || (!logado && h === 'ajustes'));
+  if (logado && h === 'precadastro') h = 'painel';
+  if (!['entrar', 'painel', 'historico', 'alertas', 'ajustes', 'precadastro'].includes(h)) h = 'painel';
+  const id = h === 'precadastro' ? 'precad' : h;
+  document.querySelectorAll('.tela').forEach((t) => t.classList.toggle('ativa', t.id === 't-' + id));
+  $('barra').classList.toggle('esconde', h === 'entrar' || h === 'precadastro' || (!logado && h === 'ajustes'));
   document.querySelectorAll('nav.barra a').forEach((a) => a.classList.toggle('ativo', a.dataset.t === h));
   $('selo-demo').classList.toggle('on', cfg.demo && logado);
   $('login-real').style.display = cfg.demo ? 'none' : 'flex';
@@ -671,6 +728,49 @@ function rota() {
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', rota);
+
+/* ============ pré-cadastro ============ */
+const PRECAD_URL = 'https://xpafmvjlwgmhmvhfsqrg.supabase.co/functions/v1/api/pre-cadastro';
+function pcVeiculo() {
+  const n = $('pc-veics').children.length + 1, d = document.createElement('div');
+  d.className = 'vcard';
+  d.innerHTML = '<h2><span>VEÍCULO ' + n + '</span>' + (n > 1 ? '<button type="button" data-rm>remover</button>' : '') + '</h2>' +
+    '<label class="campo">Tipo<select data-k="tipo"><option value="carro">Carro</option><option value="moto">Moto</option><option value="caminhao">Caminhão</option><option value="outros">Outro</option></select></label>' +
+    '<div class="lin"><label class="campo">Marca<input data-k="marca" placeholder="Chevrolet" maxlength="40"></label><label class="campo">Modelo<input data-k="modelo" placeholder="Onix" maxlength="40"></label></div>' +
+    '<div class="lin"><label class="campo">Ano (opcional)<input data-k="ano" inputmode="numeric" placeholder="2022" maxlength="4"></label><label class="campo">Placa (opcional)<input data-k="placa" placeholder="ABC1D23" maxlength="8" autocapitalize="characters"></label></div>';
+  const rm = d.querySelector('[data-rm]');
+  if (rm) rm.addEventListener('click', () => { d.remove(); [...$('pc-veics').children].forEach((c, i) => { c.querySelector('h2 span').textContent = 'VEÍCULO ' + (i + 1); }); $('pc-add').style.display = ''; });
+  $('pc-veics').appendChild(d);
+  if ($('pc-veics').children.length >= 5) $('pc-add').style.display = 'none';
+}
+function pcLimpar() {
+  $('f-precad').reset(); $('pc-veics').innerHTML = ''; pcVeiculo(); $('pc-add').style.display = '';
+  $('pc-erro').textContent = ''; $('f-precad').style.display = ''; $('pc-ok').style.display = 'none';
+}
+$('l-precad').addEventListener('click', () => { pcLimpar(); location.hash = '#precadastro'; });
+$('pc-voltar').addEventListener('click', () => { location.hash = '#entrar'; });
+$('pc-fim').addEventListener('click', () => { location.hash = '#entrar'; });
+$('pc-add').addEventListener('click', pcVeiculo);
+$('f-precad').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('pc-erro'); err.textContent = '';
+  const veiculos = [...$('pc-veics').children].map((c) => { const o = {}; c.querySelectorAll('[data-k]').forEach((i) => { o[i.dataset.k] = i.value.trim(); }); return o; });
+  const nome = $('pc-nome').value.trim(), email = $('pc-email').value.trim(), zap = $('pc-zap').value.replace(/\D/g, '');
+  if (!/\S+\s+\S+/.test(nome)) return err.textContent = 'Informe seu nome completo.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return err.textContent = 'E-mail inválido.';
+  if (zap.length < 10 || zap.length > 13) return err.textContent = 'WhatsApp inválido: use DDD + número.';
+  if (veiculos.some((v) => !v.marca || !v.modelo)) return err.textContent = 'Preencha marca e modelo de cada veículo.';
+  if (!$('pc-aceite').checked) return err.textContent = 'Marque a autorização para contato.';
+  const b = $('pc-enviar'); b.disabled = true; b.textContent = 'ENVIANDO…';
+  try {
+    const r = await fetch(PRECAD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, email, whatsapp: zap, veiculos, aceite: true, site: $('pc-site').value }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.erro) throw new Error(d.erro || 'Não foi possível enviar agora. Tente novamente.');
+    $('f-precad').style.display = 'none'; $('pc-ok').style.display = 'flex'; window.scrollTo(0, 0);
+  } catch (ex) { err.textContent = ex.message === 'Failed to fetch' ? 'Sem conexão. Verifique a internet e tente de novo.' : ex.message; }
+  finally { b.disabled = false; b.textContent = 'QUERO A PROMOÇÃO'; }
+});
+pcVeiculo();
 
 /* ============ início ============ */
 (async () => {
