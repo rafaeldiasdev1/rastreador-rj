@@ -25,6 +25,7 @@ button{cursor:pointer}
 .orb{font-family:Orbitron,sans-serif;letter-spacing:1px}
 .tela{display:none;flex:1;flex-direction:column;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .tela.ativa{display:flex}
+#t-entrar{padding:0 22px calc(40px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 25%,rgba(56,214,245,.12),transparent 60%)}
 #entrar{padding:0 24px calc(32px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 25%,rgba(56,214,245,.12),transparent 60%)}
 .logo{display:block;width:100%;max-width:340px;height:auto;margin:0 auto}
 .topo{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 4px 8px}
@@ -126,6 +127,17 @@ nav.barra.esconde{display:none}
 .vcard h2 button{background:none;border:none;color:var(--mu);font-size:12px;padding:4px}
 .aceite{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#b8bec6;line-height:1.5}
 .aceite input{width:22px;height:22px;margin-top:1px;accent-color:#38d6f5;flex:none}
+.convite{display:flex;flex-direction:column;gap:14px;text-align:left}
+.convite .data{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:20px;border:1px solid rgba(255,138,61,.5);background:linear-gradient(135deg,rgba(255,138,61,.16),rgba(255,138,61,.03))}
+.convite .data .n{font-family:Orbitron,sans-serif;font-size:38px;font-weight:700;color:var(--la);line-height:1;min-width:58px;text-align:center}
+.convite .data small{display:block;font-size:11px;letter-spacing:2px;color:var(--la);font-family:Orbitron,sans-serif;margin-bottom:4px}
+.convite .data b{display:block;font-size:15px;font-weight:600}
+.convite h2{margin:0;font-family:Orbitron,sans-serif;font-size:17px;letter-spacing:.5px;line-height:1.35}
+.convite p{margin:0;font-size:14px;line-height:1.55;color:#b8bec6}
+.convite ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.convite li{display:flex;gap:10px;font-size:14px;line-height:1.4;color:var(--tx)}
+.convite li i{font-style:normal;color:var(--ci);flex:none}
+.convite .fim{font-size:13px;color:var(--ci);font-weight:600}
 .iscas{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .ok-big{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:40px 8px}
 .ok-big .tk{width:72px;height:72px;border-radius:36px;background:rgba(56,214,245,.15);border:1px solid rgba(56,214,245,.5);display:flex;align-items:center;justify-content:center;color:var(--ci);font-size:36px}
@@ -145,7 +157,19 @@ nav.barra.esconde{display:none}
       <label class="campo">E-mail do servidor<input id="l-email" type="email" autocomplete="username" placeholder="seu@email.com"></label>
       <label class="campo">Senha<input id="l-senha" type="password" autocomplete="current-password" placeholder="••••••••"></label>
     </div>
-    <p id="login-demo" class="nota" style="padding:0;text-align:center">Modo demonstração: o carro é simulado para você testar o app. Quando o rastreador chegar, é só ativar o servidor em Ajustes.</p>
+    <div id="login-demo" class="convite">
+      <div class="data" aria-live="polite"><span class="n" id="cv-n">--</span><span><small>INAUGURAÇÃO DO APP</small><b id="cv-t">04/01/2027</b></span></div>
+      <h2>Em breve, seu carro a um toque de distância.</h2>
+      <p>Enquanto o grande dia não chega, <b style="color:var(--tx)">entre e explore</b>. Um veículo de demonstração mostra, ao vivo, tudo o que você vai ter no seu:</p>
+      <ul>
+        <li><i>●</i><span>Localização em tempo real no mapa</span></li>
+        <li><i>●</i><span>Velocidade, ignição, bateria e sinal GPS</span></li>
+        <li><i>●</i><span>Histórico completo de trajetos e paradas</span></li>
+        <li><i>●</i><span>Alertas de ignição, cerca e bateria no celular</span></li>
+        <li><i>●</i><span>Bloqueio do veículo na palma da mão</span></li>
+      </ul>
+      <p class="fim">Toque em ENTRAR e descubra por que vai valer a espera →</p>
+    </div>
     <div class="erro" id="l-erro" role="alert"></div>
     <button class="btn" type="submit">ENTRAR</button>
     <button class="btn2" type="button" id="l-ajustes">Ajustes de conexão</button>
@@ -154,7 +178,7 @@ nav.barra.esconde{display:none}
     <button class="promo" type="button" id="l-precad" aria-label="Fazer pré-cadastro com promoção">
       <b class="orb">PRÉ-CADASTRO · PROMOÇÃO</b>
       <span class="pr"><s>R$ 64,90</s><strong>R$ 54,90</strong><small>/mês por 12 meses</small></span>
-      <span>Instalação com <b style="color:var(--tx)">50% de desconto</b> (R$ 49,95 em vez de R$ 99,90). Você só paga no ato da instalação. Toque para fazer seu pré-cadastro →</span>
+      <span>Instalação com <b style="color:var(--tx)">50% de desconto</b> (R$ 49,95 em vez de R$ 99,90). Você só paga no ato da instalação. Estreia em 04/01/2027: garanta o seu agora. Toque para fazer seu pré-cadastro →</span>
     </button>
   </div>
 </section>
@@ -183,7 +207,7 @@ nav.barra.esconde{display:none}
   <div id="pc-ok" class="ok-big" style="display:none">
     <div class="tk" aria-hidden="true">✓</div>
     <h1>Pré-cadastro recebido!</h1>
-    <p class="nota" style="padding:0;font-size:14px;color:#b8bec6">Você garantiu a instalação por <b style="color:var(--tx)">R$ 49,95</b> (50% off) e a mensalidade de <b style="color:var(--tx)">R$ 54,90</b> por 12 meses. O primeiro pagamento só acontece no ato da instalação. Em breve falamos com você pelo WhatsApp.</p>
+    <p class="nota" style="padding:0;font-size:14px;color:#b8bec6">Você garantiu a instalação por <b style="color:var(--tx)">R$ 49,95</b> (50% off) e a mensalidade de <b style="color:var(--tx)">R$ 54,90</b> por 12 meses. O primeiro pagamento só acontece no ato da instalação. O app estreia em 04/01/2027 e, em breve, falamos com você pelo WhatsApp.</p>
     <button class="btn2" type="button" id="pc-fim" style="width:100%">Voltar ao início</button>
   </div>
 </section>
@@ -729,6 +753,17 @@ function rota() {
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', rota);
+
+/* ============ contagem para a inauguração (04/01/2027) ============ */
+function contagem() {
+  const h = new Date(), dias = Math.round((Date.UTC(2027, 0, 4) - Date.UTC(h.getFullYear(), h.getMonth(), h.getDate())) / 864e5);
+  const n = $('cv-n'), t = $('cv-t'); if (!n) return;
+  if (dias > 1) { n.textContent = dias; t.textContent = 'dias para a estreia · 04/01/2027'; }
+  else if (dias === 1) { n.textContent = '1'; t.textContent = 'dia para a estreia · 04/01/2027'; }
+  else if (dias === 0) { n.textContent = 'HOJE'; n.style.fontSize = '22px'; t.textContent = 'O app estreia hoje!'; }
+  else { n.textContent = '✓'; t.textContent = 'O app já está no ar'; }
+}
+contagem();
 
 /* ============ pré-cadastro ============ */
 const PRECAD_URL = 'https://xpafmvjlwgmhmvhfsqrg.supabase.co/functions/v1/api/pre-cadastro';
