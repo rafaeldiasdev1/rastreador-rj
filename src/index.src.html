@@ -90,6 +90,7 @@ nav.barra.esconde{display:none}
 .campo input{height:52px;border-radius:16px;border:1px solid #2c313a;background:var(--sf);color:var(--tx);padding:0 16px;font-size:15px}
 .form{display:flex;flex-direction:column;gap:14px;padding:4px 16px 0}
 .btn{height:56px;border-radius:18px;border:none;background:var(--ci);color:#0b0d10;font-family:Orbitron,sans-serif;font-size:15px;font-weight:700;letter-spacing:2px}
+.cta-pre{border-color:var(--ci);color:var(--ci);font-weight:700;letter-spacing:.2px}
 .btn2{height:52px;border-radius:18px;border:1px solid #2c313a;background:transparent;font-size:14px;font-weight:600}
 .erro{color:#ffb38a;font-size:13px;min-height:18px}
 .nota{font-size:12px;color:var(--mu);line-height:1.5;padding:10px 20px 0}
@@ -172,7 +173,7 @@ nav.barra.esconde{display:none}
     </div>
     <div class="erro" id="l-erro" role="alert"></div>
     <button class="btn" type="submit">ENTRAR</button>
-    <button class="btn2" type="button" id="l-ajustes">Ajustes de conexão</button>
+    <button class="btn2 cta-pre" type="button" id="l-precad2">Faça seu pré-cadastro agora →</button>
   </form>
   <div style="padding:22px 0 0">
     <button class="promo" type="button" id="l-precad" aria-label="Fazer pré-cadastro com promoção">
@@ -181,6 +182,7 @@ nav.barra.esconde{display:none}
       <span>Instalação com <b style="color:var(--tx)">50% de desconto</b> (R$ 49,95 em vez de R$ 99,90). Você só paga no ato da instalação. Estreia em 04/01/2027: garanta o seu agora. Toque para fazer seu pré-cadastro →</span>
     </button>
   </div>
+  <p style="text-align:center;margin:18px 0 0"><button type="button" id="l-ajustes" style="background:none;border:0;color:var(--mu);font-size:12px;text-decoration:underline;padding:8px">Ajustes de conexão</button></p>
 </section>
 
 <!-- PRÉ-CADASTRO -->
@@ -784,6 +786,7 @@ function pcLimpar() {
   $('pc-erro').textContent = ''; $('f-precad').style.display = ''; $('pc-ok').style.display = 'none';
 }
 $('l-precad').addEventListener('click', () => { pcLimpar(); location.hash = '#precadastro'; });
+$('l-precad2').addEventListener('click', () => { pcLimpar(); location.hash = '#precadastro'; });
 $('pc-voltar').addEventListener('click', () => { location.hash = '#entrar'; });
 $('pc-fim').addEventListener('click', () => { location.hash = '#entrar'; });
 $('pc-add').addEventListener('click', pcVeiculo);
