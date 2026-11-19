@@ -72,6 +72,38 @@ nav.barra.esconde{display:none}
 .ic.la{background:rgba(255,138,61,.14);color:var(--la)}
 .ic.ci{background:rgba(56,214,245,.12);color:var(--ci)}
 .item .tx{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.tela-traj{position:fixed;inset:0;padding:0;z-index:900;background:var(--bg)}
+#tj-mapa{position:absolute;inset:0;background:#0b0d10}
+.tj-voltar{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));z-index:1000;background:rgba(21,24,29,.92)}
+.tj-seguir{position:absolute;right:14px;top:calc(14px + env(safe-area-inset-top));z-index:1000;height:44px;padding:0 14px;border-radius:14px;background:rgba(21,24,29,.92);border:1px solid var(--ln);font-size:12px;font-weight:700;color:var(--mu)}
+.tj-seguir.on{color:var(--ci);border-color:var(--ci)}
+.tj-folha{position:absolute;left:0;right:0;bottom:0;z-index:1000;background:rgba(15,18,22,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--ln);border-radius:26px 26px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+.tj-alca{width:40px;height:4px;border-radius:4px;background:#2c313a;align-self:center}
+.tj-tit{font-size:13px;letter-spacing:1.5px;color:var(--ci)}
+.tj-end{font-size:13px;line-height:1.35;color:var(--tx)}
+.tj-end small{display:block;color:var(--mu);font-size:11px;margin-top:2px}
+.tj-nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tj-nums div{background:var(--sf2);border:1px solid var(--ln);border-radius:14px;padding:8px 6px;text-align:center;min-width:0}
+.tj-nums small{display:block;font-size:10px;color:var(--mu);margin-bottom:2px}
+.tj-nums b{font-family:Orbitron,sans-serif;font-size:13px;font-weight:600}
+.tj-live{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.tj-kmh{font-family:Orbitron,sans-serif;font-size:38px;font-weight:600;line-height:1;color:var(--ci)}
+.tj-kmh.ex{color:var(--la)}
+.tj-kmh small{font-size:12px;color:var(--mu);font-family:Inter,sans-serif;margin-left:4px}
+.tj-hora{font-size:13px;color:var(--mu);text-align:right}
+.tj-hora b{display:block;font-size:20px;color:var(--tx);font-family:Orbitron,sans-serif;font-weight:500}
+.tj-ctrl{display:flex;align-items:center;gap:12px}
+.tj-play{width:52px;height:52px;border-radius:50%;background:var(--ci);color:#06222a;border:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tj-mult{min-width:44px;height:36px;border-radius:12px;border:1px solid #2c313a;background:transparent;font-weight:700;font-size:13px;color:var(--tx)}
+#tj-bar{flex:1;min-width:0;accent-color:var(--ci);height:28px}
+.pino{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 13px Inter,sans-serif;border:3px solid #0b0d10;box-shadow:0 0 0 2px currentColor,0 0 18px currentColor}
+.pino.a{background:#3ddc84;color:#3ddc84}.pino.b{background:#fff;color:#fff}.pino.x{background:var(--la);color:var(--la)}
+.pino span{color:#06141a}
+.pulso{width:22px;height:22px;border-radius:50%;background:var(--ci);border:3px solid #0b0d10;box-shadow:0 0 0 2px var(--ci);animation:pls 1.8s ease-out infinite}
+@keyframes pls{0%{box-shadow:0 0 0 2px var(--ci),0 0 0 0 rgba(56,214,245,.6)}100%{box-shadow:0 0 0 2px var(--ci),0 0 0 30px rgba(56,214,245,0)}}
+.item.ir{cursor:pointer}
+.item .seta{color:var(--mu);flex-shrink:0;margin-left:-4px}
+
 .item .tx b{font-size:14px;font-weight:600}
 .item .tx span,.item .hr{font-size:12px;color:var(--mu)}
 .vazio{padding:28px 16px;text-align:center;color:var(--mu);font-size:14px}
@@ -282,6 +314,25 @@ nav.barra.esconde{display:none}
   <div class="lista" id="h-lista"></div>
 </section>
 
+<!-- TRAJETO -->
+<section class="tela tela-traj" id="t-trajeto" aria-label="Trajeto no mapa">
+  <div id="tj-mapa"></div>
+  <button class="icbtn tj-voltar" type="button" id="tj-voltar" aria-label="Voltar ao histórico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="tj-seguir on" type="button" id="tj-seguir" aria-pressed="true">Seguir carro</button>
+  <div class="tj-folha">
+    <div class="tj-alca"></div>
+    <b class="orb tj-tit" id="tj-tit"></b>
+    <div class="tj-end" id="tj-end"></div>
+    <div class="tj-nums" id="tj-nums"></div>
+    <div class="tj-live" id="tj-live"><div class="tj-kmh" id="tj-kmh">0<small>km/h</small></div><div class="tj-hora"><small>horário no trajeto</small><b id="tj-hora">--:--</b></div></div>
+    <div class="tj-ctrl" id="tj-ctrl">
+      <button class="tj-play" type="button" id="tj-play" aria-label="Reproduzir trajeto"></button>
+      <input type="range" id="tj-bar" min="0" max="1000" value="0" aria-label="Posição no trajeto">
+      <button class="tj-mult" type="button" id="tj-mult" aria-label="Velocidade da reprodução">1×</button>
+    </div>
+  </div>
+</section>
+
 <!-- ALERTAS -->
 <section class="tela" id="t-alertas" aria-label="Alertas">
   <div class="cab"><h1>Alertas</h1></div>
@@ -391,7 +442,46 @@ function alerta(tipo, quando, detalhe) {
   render();
 }
 
-const CASA = 'Rua Conde de Bonfim, 500 · Tijuca', TRAB = 'Av. Presidente Vargas, 1733 · Centro';
+const GEO = {
+  rot: {"casa-trab": "nt|jCd{zfGvF`BMjDyAhFaCaBeAkAcLuQDyExByI|EwOHw@KkBi@qAsAiBeHsH_FmGw@wCkDaRaDkKyD{JyL_UkHNaFMmBQmM_Dg@[y@_Bg@Sc@L}AbCu@j@JvAdASdAy@r@eBP_BGwBoDmP", "trab-lav": "jqyjCdnufGyGeZd@GJO~@Yh@_AaH}\\`GiBfLsFxByArG{JbH_JNg@dAuEO{DCiG_BgIUmEiCqMeADIz@", "lav-trab": "xfzjCpypfGsF`h@ITq@VSd@@f@f@fAqCbX[d@fA|BbJdz@pChFbCtMAr@W|@yC~DgDlGkBEcEeAg@[eAkBk@EqBnCu@j@JvAdASdAy@r@eBP_BGwBoDmP", "trab-mer": "jqyjCdnufGq@wC{@V~DtQ?vAu@nGCtBVpCfCtLN`CEhBeAxGj@rIAfFuBvISpEd@hFxBxMxGfLfJdHdCdCtG`FlAXlDxCrCtDr@dBbDzExAdGj@dAdJhEtK`Ax@PTP`@~CG|\\VbBlAlCwIrF~AfDfGiD", "mer-casa": "nn|jCpd}fGjAm@TAjCpFvT_MfHkEgd@sb@YQ{Co@Ya@y@sBBq@~IwN~@R", "trab-bot": "jqyjCdnufGyGeZd@GJO~@Yh@_A}CcOHm@fGcCje@kMxBMpLhApBK~Bk@veAyt@nJsD~g@_JnFcAxEoAd@J~BdCvDxBzCl@rH|@vSH^dKPrOiCjA", "bot-casa": "jeakCtkrfG}FrCiBmDsDg@a@Q?eBrAkO{@ISaTaF_@iEaAkC?}MlDs_@nGkFnA_Fr@yLnEmaA`r@qGnAeAH}Gk@uEy@kCUyGvDgBb@}AKeAfA}C`@m@b@E`@XhC~Ffi@pChF|BrLD~@_@dB@ZbEzGzCtQpAxFvCfKtJd[bGtNn@zBb@xEA`KPnCr@dDzE|OEd@k@Z?z@dEjLbE|IhGwJ~@R", "barra-casa": "xdkkCfvtgGb@faAg@`EDrHR^`@Ff@Ai@a}@ZkCGyK^kIGc@QMyELuBzAsEzEgC~@cCJ}lBs@s_@_NgD_BeCwBuDaF_FkFyLiKiDyA_Fc@sH@cKN_Ox@_CUmHaCaD_@_BHyGvBgCXgIeAwGa@_Eq@yDiAmOiHaI_D{LiGqF}BqEkC_d@__@}LkGoMeFyJyEsCoBcEoEkD{GqI{S}Ji]iAcD}g@}dAuEqGaC_CcDcCaEuBiR}GkAs@eAeAoAqBcAkDQ}D^}HrA_FD}DUqA}BqG_BeCoB}AyAm@gh@yLmB}@aGkEqCuAiBq@_LkCiE_DWa@Ik@^_@lBf@rMAGqNg@_KPkHv@gHvFo[lBeR`AyEjBkE~@wAvUoVd@w@xBcGbEcCt@{BJkAGaAoEyIRaDUcAgBuEgBsBG[LYdA{@nBe@bKsGg@mLgCgHO{BUcM`@q@zEOVK`AeB`LsLfGqHdA_CxAqEr@mArAeBhEcDjEyApBa@tEa@bDGdU_D_K_`AAu@xCe@`g@cWFgAy@sBBq@~IwN~@R", "casa-parq": "nt|jCd{zfGvF`BMjDyAhFaCaBeAkAcLuQDyExByI|EwOHw@KkBi@qAsAiBeHsH_FmGw@wCkDaR{DaM_DeIkD_H_BgCuPc[mCaNwCsEMo@@wBjEoPr@wGsBsTuCwR_@oAxH_KrAkFSiN}AuHUmEuDyQv@}GbCiCa@uAx@{F?aBvAsEZOr@CvDl@jDFvBK~Ca@nCaAvBuAdFcHxCmCvBcAjEu@|ACvCTpp@zMfBRrEA|Hu@vAe@`Am@j@g@V_ASc@a@A[JuBlB_Bn@yF`AoCD{CWsa@mI", "parq-mar": "~||jCz~nfG_TeEaAIe@FSVFd@t@T|ACvCTpp@zMhFXrIq@rCq@`Am@fAeAxDwG|@aAjAs@|Ag@jAOhB@hDv@zCnBpFvG|BhDx@dBQr@{Av@sC{CiI}LkFeC_BGu@P_Ah@wB`FsClENhAn@XfFe@VLdAlAk@tA_FvAmDXDnBwGeBoAWOFaJ~Je@Gf@sMN?nBdF", "mar-casa": "lg~jCxwofG^hA}EfFqAh@aGRe@^G^pJbb@bArBIxAeJhDcDhC{}@do@qGnAeAH}Gk@uEy@kCUyGvDgBb@}AKeAfA}C`@e@XMj@xGpm@pChF|BrLD~@_@dB@ZbEzGzCtQpAxFvCfKtJd[bGtNn@zBb@xEA`KPnCr@dDzE|OEd@k@Z?z@dEjLbE|IhGwJ~@R"},
+  via: {"casa-trab": "Rua Conde de Bonfim e Rua Haddock Lobo", "trab-lav": "Rua Riachuelo e Rua Benedito Hipólito", "lav-trab": "Av. Mem de Sá e Av. Salvador de Sá", "trab-mer": "Av. Maracanã e Av. Osvaldo Aranha", "mer-casa": "Av. Maracanã e Rua Uruguai", "trab-bot": "Túnel Santa Bárbara e Av. 31 de Março", "bot-casa": "Túnel Santa Bárbara e Rua Dr. Satamini", "barra-casa": "Linha Amarela e Av. Ayrton Senna", "casa-parq": "Av. Infante Dom Henrique e Rua Conde de Bonfim", "parq-mar": "Av. Infante Dom Henrique e Av. Rui Barbosa", "mar-casa": "Túnel Santa Bárbara e Rua Dr. Satamini"},
+  ex: {"bot-casa": [-22.93048, -43.18616], "barra-casa": [-22.95191, -43.3569]},
+  lugar: {"casa": [-22.9257, -43.2326], "trab": [-22.9098, -43.205], "lav": [-22.9132, -43.1812], "mer": [-22.9245, -43.244], "bot": [-22.949, -43.1895], "barra": [-23.0, -43.365], "parq": [-22.9275, -43.17], "mar": [-22.9335, -43.176]}
+};
+const NOME = {
+  casa: 'Rua Conde de Bonfim, 500 · Tijuca', trab: 'Av. Presidente Vargas, 1733 · Centro', lav: 'Rua do Lavradio, 90 · Centro',
+  mer: 'Rua Barão de Mesquita, 300 · Tijuca', bot: 'Rua Voluntários da Pátria, 120 · Botafogo', barra: 'Av. Lúcio Costa, 3150 · Barra da Tijuca',
+  parq: 'Av. Infante Dom Henrique · Parque do Flamengo', mar: 'Rua Marquês de Abrantes, 55 · Flamengo'
+};
+const CASA = NOME.casa, TRAB = NOME.trab;
+const _rc = {};
+function decodePoly(t) {
+  const r = []; let i = 0, la = 0, lo = 0;
+  while (i < t.length) {
+    for (let k = 0; k < 2; k++) {
+      let b, sh = 0, v = 0;
+      do { b = t.charCodeAt(i++) - 63; v |= (b & 31) << sh; sh += 5; } while (b >= 32);
+      v = (v & 1) ? ~(v >> 1) : (v >> 1);
+      if (k === 0) la += v; else lo += v;
+    }
+    r.push([la / 1e5, lo / 1e5]);
+  }
+  return r;
+}
+function distKm(a, b) {
+  const R = 6371, rad = Math.PI / 180, dl = (b[0] - a[0]) * rad, dn = (b[1] - a[1]) * rad;
+  const x = Math.sin(dl / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dn / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+/* rota 'a-b': usa a geometria guardada ou a inversa de 'b-a' */
+function rotaGeo(key) {
+  if (_rc[key]) return _rc[key];
+  let pts, via = GEO.via[key], ex = GEO.ex[key];
+  if (GEO.rot[key]) pts = decodePoly(GEO.rot[key]);
+  else { const inv = key.split('-').reverse().join('-'); pts = decodePoly(GEO.rot[inv]).reverse(); via = GEO.via[inv]; ex = GEO.ex[inv]; }
+  const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + distKm(pts[i - 1], pts[i]));
+  return (_rc[key] = { pts, cum, km: cum[cum.length - 1], via: via || '', ex: ex || null });
+}
 /* ============ fonte de dados: DEMONSTRAÇÃO ============ */
 const Demo = {
   timer: null, fase: 'parado', t0: 0, dir: 1, lista: [], viagemAtual: null, sel: 1, salvo: null,
@@ -418,7 +508,7 @@ const Demo = {
     const agora = Date.now(), dt = (agora - this.t0) / 1000;
     if (this.fase === 'parado' && dt > 15 && !st.bloq) {
       this.fase = 'ligado'; this.t0 = agora; st.ign = true; st.bat = 14.1; alerta('ign_on');
-      this.viagemAtual = { tipo: 'viagem', inicio: agora, dist: 0, max: 0, de: this.dir > 0 ? CASA : TRAB, para: this.dir > 0 ? TRAB : CASA, via: 'Av. Maracanã e Av. Presidente Vargas' };
+      this.viagemAtual = { tipo: 'viagem', inicio: agora, dist: 0, max: 0, key: this.dir > 0 ? 'casa-trab' : 'trab-casa', de: this.dir > 0 ? CASA : TRAB, para: this.dir > 0 ? TRAB : CASA };
     } else if (this.fase === 'ligado' && dt > 3) {
       this.fase = 'andando'; this.t0 = agora;
       if (this.dir > 0) alerta('cerca');
@@ -433,7 +523,7 @@ const Demo = {
       st.vel = Math.max(0, st.vel - 15);
       if (st.vel === 0) {
         st.ign = false; st.bat = 12.6; alerta('ign_off');
-        const v = this.viagemAtual; v.fim = Date.now(); this.lista.unshift(v); this.viagemAtual = null;
+        const v = this.viagemAtual; const g = rotaGeo(v.key); v.fim = Date.now(); v.dist = g.km; v.via = g.via; v.inicio = v.fim - g.km / 13.5 * 3600000; v.media = 14; v.max = Math.max(v.max, 52); this.lista.unshift(v); this.viagemAtual = null;
         this.fase = 'parado'; this.t0 = Date.now(); this.dir = -this.dir;
       }
     }
@@ -450,26 +540,18 @@ const Demo = {
     if (st.vel < LIMITE_BLOQUEIO) { this.executarBloqueio(); return 'ok'; }
     st.pendente = 'bloq'; render(); return 'pendente';
   },
-  /* Histórico de exemplo com ruas reais do Rio. Cada dia tem viagens e paradas; o pernoite liga o fim de um dia ao começo do seguinte. */
+  /* Histórico de exemplo com ruas reais do Rio. Cada dia tem viagens e paradas; o pernoite liga o fim de um dia ao começo do seguinte.
+     t = viagem [h1,m1,h2,m2, de, para, vmax, excesso?]  ·  p = parada [h1,m1,h2,m2, lugar] */
   historicoFalso() {
-    const L = {
-      casa: CASA, trab: TRAB,
-      lav: 'Rua do Lavradio, 90 · Centro', mer: 'Rua Barão de Mesquita, 300 · Tijuca', bot: 'Rua Voluntários da Pátria, 120 · Botafogo',
-      barra: 'Av. Lúcio Costa, 3150 · Barra da Tijuca', parq: 'Av. Infante Dom Henrique · Parque do Flamengo', mar: 'Rua Marquês de Abrantes, 55 · Flamengo'
-    };
-    // t = viagem [h1,m1,h2,m2, de, para, km, vmax, via, excesso?]  |  p = parada [h1,m1,h2,m2, local]
     const util = [
-      ['t', 7, 38, 8, 9, L.casa, L.trab, 9.6, 71, 'Av. Maracanã e Av. Presidente Vargas'],
-      ['p', 8, 9, 12, 15, L.trab],
-      ['t', 12, 15, 12, 26, L.trab, L.lav, 2.1, 44, 'Av. Presidente Vargas e Rua do Riachuelo'],
-      ['p', 12, 26, 13, 21, L.lav],
-      ['t', 13, 21, 13, 30, L.lav, L.trab, 2.0, 41, 'Rua do Riachuelo'],
-      ['p', 13, 30, 18, 2, L.trab]
+      ['t', 7, 40, 8, 2, 'casa', 'trab', 71], ['p', 8, 2, 12, 15, 'trab'],
+      ['t', 12, 15, 12, 27, 'trab', 'lav', 44], ['p', 12, 27, 13, 21, 'lav'],
+      ['t', 13, 21, 13, 36, 'lav', 'trab', 41], ['p', 13, 36, 18, 2, 'trab']
     ];
-    const volta1 = [['t', 18, 2, 18, 40, L.trab, L.mer, 10.8, 74, 'Av. Presidente Vargas e Av. Radial Oeste'], ['p', 18, 40, 19, 55, L.mer], ['t', 19, 55, 20, 3, L.mer, L.casa, 1.9, 38, 'Rua Conde de Bonfim']];
-    const volta2 = [['t', 18, 5, 18, 41, L.trab, L.bot, 9.4, 62, 'Av. Presidente Vargas e Aterro do Flamengo'], ['p', 18, 41, 20, 10, L.bot], ['t', 20, 10, 20, 52, L.bot, L.casa, 12.3, 88, 'Túnel Rebouças', 'Túnel Rebouças']];
-    const sab = [['t', 10, 15, 11, 2, L.casa, L.barra, 24.8, 92, 'Linha Amarela', 'Linha Amarela'], ['p', 11, 2, 16, 30, L.barra], ['t', 16, 30, 17, 20, L.barra, L.casa, 25.3, 79, 'Linha Amarela']];
-    const dom = [['t', 9, 40, 10, 12, L.casa, L.parq, 11.7, 66, 'Av. Radial Oeste e Aterro do Flamengo'], ['p', 10, 12, 13, 5, L.parq], ['t', 13, 5, 13, 22, L.parq, L.mar, 2.3, 38, 'Av. Infante Dom Henrique'], ['p', 13, 22, 15, 40, L.mar], ['t', 15, 40, 16, 15, L.mar, L.casa, 10.9, 71, 'Aterro do Flamengo e Av. Radial Oeste']];
+    const volta1 = [['t', 18, 2, 18, 30, 'trab', 'mer', 62], ['p', 18, 30, 19, 55, 'mer'], ['t', 19, 55, 20, 3, 'mer', 'casa', 38]];
+    const volta2 = [['t', 18, 5, 18, 34, 'trab', 'bot', 66], ['p', 18, 34, 20, 10, 'bot'], ['t', 20, 10, 20, 32, 'bot', 'casa', 87, 'Túnel Santa Bárbara']];
+    const sab = [['t', 10, 15, 10, 58, 'casa', 'barra', 92, 'Linha Amarela'], ['p', 10, 58, 16, 30, 'barra'], ['t', 16, 30, 17, 12, 'barra', 'casa', 79]];
+    const dom = [['t', 9, 40, 10, 12, 'casa', 'parq', 66], ['p', 10, 12, 13, 5, 'parq'], ['t', 13, 5, 13, 22, 'parq', 'mar', 48], ['p', 13, 22, 15, 40, 'mar'], ['t', 15, 40, 16, 8, 'mar', 'casa', 71]];
     const dia = (off) => {
       const d = new Date(); d.setDate(d.getDate() - off); const w = d.getDay();
       return w === 6 ? sab : w === 0 ? dom : (w === 3 || w === 5) ? util.concat(volta2) : util.concat(volta1);
@@ -478,15 +560,15 @@ const Demo = {
     const corte = this.inicioSessao, out = [];
     for (let off = 0; off <= 7; off++) {
       const seg = dia(off), ult = dia(off + 1), u = ult[ult.length - 1];
-      const evs = seg.map((e) => e[0] === 't'
-        ? { tipo: 'viagem', inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), de: e[5], para: e[6], dist: e[7], max: e[8], via: e[9], excesso: e[10] }
-        : { tipo: 'parada', inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), local: e[5] });
-      // pernoite: do último destino do dia anterior até a primeira saída deste dia
-      const prim = seg[0];
-      evs.push({ tipo: 'pernoite', inicio: at(off + 1, u[3], u[4]), fim: at(off, prim[1], prim[2]), local: L.casa });
+      const evs = seg.map((e) => {
+        if (e[0] === 'p') return { tipo: 'parada', inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), lk: e[5], local: NOME[e[5]] };
+        const key = e[5] + '-' + e[6], g = rotaGeo(key);
+        return { tipo: 'viagem', key, inicio: at(off, e[1], e[2]), fim: at(off, e[3], e[4]), de: NOME[e[5]], para: NOME[e[6]], dist: g.km, max: e[7], via: g.via, excesso: e[8] };
+      });
+      evs.push({ tipo: 'pernoite', inicio: at(off + 1, u[3], u[4]), fim: at(off, seg[0][1], seg[0][2]), lk: 'casa', local: NOME.casa });
       evs.forEach((e) => {
-        if (e.inicio >= corte) return;                       // ainda não aconteceu
-        if (e.fim > corte) { e.fim = corte; e.aberto = true; } // em andamento
+        if (e.inicio >= corte) return;
+        if (e.fim > corte) { e.fim = corte; e.aberto = true; }
         if (e.tipo === 'viagem') e.media = Math.round(e.dist / ((e.fim - e.inicio) / 3600000));
         out.push(e);
       });
@@ -578,6 +660,12 @@ const Traccar = {
     if (tipo === 'engineResume') { st.bloq = false; st.pendente = null; alerta('desb'); return 'ok'; }
     st.pendente = 'bloq'; render(); return st.vel < LIMITE_BLOQUEIO ? 'enviado' : 'pendente';
   },
+  async posicoes(v) {
+    const q = new URLSearchParams({ deviceId: this.dev.id, from: new Date(v.inicio).toISOString(), to: new Date(v.fim).toISOString() });
+    let r = await this.api('/api/reports/route?' + q);
+    if (r.length > 1500) { const n = Math.ceil(r.length / 1500); r = r.filter((_, i) => i % n === 0); }
+    return r.filter((p) => p.latitude != null).map((p) => ({ lat: p.latitude, lon: p.longitude, vel: Math.round((p.speed || 0) * 1.852), t: new Date(p.fixTime).getTime() }));
+  },
   async viagens(dias) {
     const de = new Date(); de.setHours(0, 0, 0, 0); de.setDate(de.getDate() - dias);
     const ate = dias === 1 ? new Date(de.getTime() + 864e5) : new Date();
@@ -587,6 +675,13 @@ const Traccar = {
   }
 };
 
+async function leafletPronto() {
+  if (window.L) return;
+  await new Promise((ok, erro) => {
+    const c = document.createElement('link'); c.rel = 'stylesheet'; c.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
+    const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; sc.onload = ok; sc.onerror = erro; document.head.appendChild(sc);
+  });
+}
 /* ============ mapa ============ */
 const Mapa = {
   leaf: null, mk: null,
@@ -595,12 +690,7 @@ const Mapa = {
   },
   async real() {
     $('mapa-svg').style.display = 'none'; $('leaf').hidden = false;
-    if (!window.L) {
-      await new Promise((ok, erro) => {
-        const c = document.createElement('link'); c.rel = 'stylesheet'; c.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
-        const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload = ok; s.onerror = erro; document.head.appendChild(s);
-      });
-    }
+    await leafletPronto();
     if (!this.leaf) {
       this.leaf = L.map('leaf', { zoomControl: false, attributionControl: true }).setView([-22.9, -43.2], 14);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO' }).addTo(this.leaf);
@@ -624,6 +714,128 @@ const Mapa = {
     else { this.mk.setLatLng(ll); this.mk.setIcon(icon); }
   }
 };
+
+
+/* ============ TRAJETO NO MAPA: rota desenhada + replay ============ */
+const SVG_PLAY = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const SVG_PAUSA = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+const Traj = {
+  v: null, mapa: null, grupo: null, feita: null, carro: null, g: null, u: 0, tocando: false, mult: 1, seguir: true, raf: 0, ult: 0, uex: null, vels: null, tms: null,
+  DUR: 26000,
+  abrir(v) { this.v = v; location.hash = '#trajeto'; },
+  async montar() {
+    const v = this.v; if (!v) { location.hash = '#historico'; return; }
+    this.parar(); this.u = 0; this.mult = 1; $('tj-mult').textContent = '1×'; $('tj-bar').value = 0;
+    const t = v.tipo || 'viagem';
+    $('tj-tit').textContent = t === 'viagem' ? 'TRAJETO' : t === 'parada' ? 'PARADA' : 'PERNOITE';
+    $('tj-play').innerHTML = SVG_PLAY;
+    $('tj-end').innerHTML = '<small>Carregando mapa…</small>';
+    try { await leafletPronto(); } catch (e) { $('tj-end').innerHTML = '<small>Não foi possível carregar o mapa. Verifique a internet.</small>'; return; }
+    if (!this.mapa) {
+      this.mapa = L.map('tj-mapa', { zoomControl: false, attributionControl: true });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO' }).addTo(this.mapa);
+      this.mapa.on('dragstart', () => { if (this.tocando && this.seguir) this.setSeguir(false); });
+    }
+    if (this.grupo) this.grupo.remove();
+    this.grupo = L.layerGroup().addTo(this.mapa);
+    setTimeout(() => this.mapa.invalidateSize(), 60);
+    const mostra = (id, on) => { $(id).style.display = on ? '' : 'none'; };
+    if (t === 'viagem') { mostra('tj-live', true); mostra('tj-ctrl', true); mostra('tj-seguir', true); mostra('tj-nums', true); await this.montarViagem(v); }
+    else { mostra('tj-live', false); mostra('tj-ctrl', false); mostra('tj-seguir', false); mostra('tj-nums', false); this.montarLocal(v, t); }
+  },
+  montarLocal(v, t) {
+    const c = GEO.lugar[v.lk] || GEO.lugar.casa;
+    const ic = L.divIcon({ className: '', html: '<div class="pulso"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+    L.marker(c, { icon: ic }).addTo(this.grupo);
+    setTimeout(() => this.mapa.setView(c, 17), 80);
+    $('tj-end').innerHTML = '<b>' + (t === 'pernoite' ? 'Pernoite · ' : 'Parado · ') + dur(v.fim - v.inicio) + (v.aberto ? ' (em andamento)' : '') + '</b><br>' + esc(v.local) + '<small>' + diaCurto(v.inicio) + ' ' + hora(v.inicio) + ' → ' + (v.aberto ? 'agora' : diaCurto(v.fim) + ' ' + hora(v.fim)) + ' · ignição desligada</small>';
+  },
+  async montarViagem(v) {
+    let pts, cum, km;
+    this.vels = null; this.tms = null; this.uex = null;
+    if (v.key) { this.g = rotaGeo(v.key); pts = this.g.pts; cum = this.g.cum; km = this.g.km; }
+    else {
+      try {
+        const r = await fonte().posicoes(v);
+        if (r.length < 2) throw new Error('vazio');
+        pts = r.map((p) => [p.lat, p.lon]); cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + distKm(pts[i - 1], pts[i]));
+        km = cum[cum.length - 1] || 0.001; this.vels = r.map((p) => p.vel); this.tms = r.map((p) => p.t);
+        this.g = { pts, cum, km, ex: null };
+      } catch (e) { $('tj-end').innerHTML = '<small>Sem pontos de GPS gravados nesta viagem.</small>'; return; }
+    }
+    this.pts = pts; this.cum = cum; this.km = km;
+    const lin = L.polyline(pts, { color: '#38d6f5', weight: 5, opacity: .28, lineJoin: 'round' }).addTo(this.grupo);
+    this.feita = L.polyline([pts[0]], { color: '#38d6f5', weight: 5, opacity: 1, lineJoin: 'round' }).addTo(this.grupo);
+    const pino = (ll, cls, txt) => L.marker(ll, { icon: L.divIcon({ className: '', html: '<div class="pino ' + cls + '"><span>' + txt + '</span></div>', iconSize: [28, 28], iconAnchor: [14, 14] }) }).addTo(this.grupo);
+    pino(pts[0], 'a', 'A').bindTooltip('Saída ' + hora(v.inicio), { direction: 'top', offset: [0, -12] });
+    pino(pts[pts.length - 1], 'b', 'B').bindTooltip('Chegada ' + hora(v.fim), { direction: 'top', offset: [0, -12] });
+    if (v.excesso && this.g.ex) {
+      pino(this.g.ex, 'x', '!').bindTooltip('Excesso: ' + v.max + ' km/h · ' + v.excesso, { direction: 'top', offset: [0, -12] });
+      let mi = 0, md = 1e9; pts.forEach((p, i) => { const d = distKm(p, this.g.ex); if (d < md) { md = d; mi = i; } });
+      this.uex = cum[mi] / km;
+    }
+    const ic = L.divIcon({ className: '', html: Mapa.carroSvg(0), iconSize: [30, 56], iconAnchor: [15, 28] });
+    this.carro = L.marker(pts[0], { icon: ic, zIndexOffset: 1000 }).addTo(this.grupo);
+    setTimeout(() => this.mapa.fitBounds(lin.getBounds(), { padding: [40, 40], paddingBottomRight: [40, 330] }), 90);
+    const dm = v.fim - v.inicio, mediaK = v.media || Math.round(km / (dm / 3600000));
+    $('tj-end').innerHTML = '<b>' + esc(v.de || (v.rota || '').split(' → ')[0] || 'Saída') + '</b><br>→ <b>' + esc(v.para || (v.rota || '').split(' → ')[1] || 'Chegada') + '</b><small>' + diaCurto(v.inicio) + (v.via ? ' · via ' + esc(v.via) : '') + '</small>';
+    $('tj-nums').innerHTML = [['Distância', km.toFixed(1).replace('.', ',') + ' km'], ['Duração', dur(dm)], ['Máx.', v.max + ' km/h'], ['Média', mediaK + ' km/h']].map(([a, b]) => '<div><small>' + a + '</small><b>' + b + '</b></div>').join('');
+    this.setSeguir(true);
+    this.pos(0);
+  },
+  setSeguir(on) { this.seguir = on; const b = $('tj-seguir'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); },
+  /* velocidade (km/h) em u ∈ [0,1]: perfil sintético na demonstração, dado real no Traccar */
+  vel(u) {
+    if (this.vels) { const i = Math.min(this.vels.length - 1, Math.round(u * (this.vels.length - 1))); return this.vels[i]; }
+    const v = this.v, x = Math.min(1, Math.max(0, u));
+    const f = (w) => {
+      let b = 0.32 + 0.68 * Math.pow(Math.sin(Math.PI * w), 0.55) + 0.12 * Math.sin(w * 41) + 0.07 * Math.sin(w * 97 + 1);
+      b *= 1 - 0.85 * Math.exp(-Math.pow((w - 0.37) / 0.012, 2));
+      if (this.uex != null) b += 0.8 * Math.exp(-Math.pow((w - this.uex) / 0.035, 2));
+      return Math.max(0, b);
+    };
+    if (this._mx == null || this._mxk !== v) { let m = 0; for (let i = 0; i <= 400; i++) m = Math.max(m, f(i / 400)); this._mx = m; this._mxk = v; }
+    return Math.round(f(x) / this._mx * v.max);
+  },
+  pos(u) {
+    this.u = Math.min(1, Math.max(0, u));
+    const d = this.u * this.km, c = this.cum; let lo = 0, hi = c.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (c[m] <= d) lo = m; else hi = m; }
+    const a = this.pts[lo], b = this.pts[hi], seg = (c[hi] - c[lo]) || 1e-9, f = Math.min(1, Math.max(0, (d - c[lo]) / seg));
+    const ll = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+    const curso = Math.atan2((b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180), b[0] - a[0]) * 180 / Math.PI;
+    this.carro.setLatLng(ll);
+    const el = this.carro.getElement(); if (el) { const sv = el.querySelector('svg'); if (sv) sv.style.transform = 'rotate(' + curso.toFixed(0) + 'deg)'; }
+    this.feita.setLatLngs(this.pts.slice(0, lo + 1).concat([ll]));
+    if (this.tocando && this.seguir) this.mapa.setView(ll, Math.max(this.mapa.getZoom(), 16), { animate: false });
+    const vv = this.vel(this.u), vx = this.v.excesso && this.uex != null && Math.abs(this.u - this.uex) < 0.05 && vv >= this.v.max * 0.9;
+    const k = $('tj-kmh'); k.innerHTML = vv + '<small>km/h</small>'; k.classList.toggle('ex', vx);
+    const tm = this.tms ? this.tms[Math.min(this.tms.length - 1, Math.round(this.u * (this.tms.length - 1)))] : this.v.inicio + this.u * (this.v.fim - this.v.inicio);
+    $('tj-hora').textContent = hora(tm);
+    $('tj-bar').value = Math.round(this.u * 1000);
+  },
+  tocar() {
+    if (this.u >= 1) this.u = 0;
+    this.tocando = true; this.ult = performance.now(); $('tj-play').innerHTML = SVG_PAUSA;
+    if (this.seguir) this.mapa.setView(this.carro.getLatLng(), 16, { animate: true });
+    const passo = (agora) => {
+      if (!this.tocando) return;
+      const dt = agora - this.ult; this.ult = agora;
+      this.pos(this.u + dt * this.mult / this.DUR);
+      if (this.u >= 1) { this.pausar(); return; }
+      this.raf = requestAnimationFrame(passo);
+    };
+    this.raf = requestAnimationFrame(passo);
+  },
+  pausar() { this.tocando = false; cancelAnimationFrame(this.raf); const b = $('tj-play'); if (b) b.innerHTML = SVG_PLAY; },
+  parar() { this.pausar(); }
+};
+const diaCurto = (d) => { const o = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 864e5); return o === 0 ? 'Hoje' : o === 1 ? 'Ontem' : new Date(d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace('.', ''); };
+$('tj-voltar').addEventListener('click', () => { Traj.parar(); location.hash = '#historico'; });
+$('tj-play').addEventListener('click', () => { Traj.tocando ? Traj.pausar() : Traj.tocar(); });
+$('tj-mult').addEventListener('click', () => { Traj.mult = Traj.mult === 1 ? 2 : Traj.mult === 2 ? 4 : 1; $('tj-mult').textContent = Traj.mult + '×'; });
+$('tj-seguir').addEventListener('click', () => { Traj.setSeguir(!Traj.seguir); if (Traj.seguir && Traj.carro) Traj.mapa.setView(Traj.carro.getLatLng(), 16); });
+$('tj-bar').addEventListener('input', (e) => { Traj.pos(Number(e.target.value) / 1000); });
 
 /* Escuta: o administrador libera por veículo no servidor (atributo "escuta" = true
    e o número do chip no campo Telefone do dispositivo). Nunca aparece na demonstração. */
@@ -695,6 +907,7 @@ $('a-opcoes').addEventListener('click', (e) => {
   cfg.notif[k] = !cfg.notif[k]; store.set('notif', cfg.notif); renderAlertas();
 });
 
+let histAtual = [];
 const IC_H = {
   viagem: ['ci', 'M5 12h14M13 6l6 6-6 6'],
   parada: ['ci', 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 7.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z'],
@@ -709,8 +922,9 @@ async function renderHistorico() {
   $('h-resumo').innerHTML = [['Distância', dist.toFixed(0) + ' km'], ['Em movimento', dur(tempo)], ['Vel. máx.', max + ' km/h']].map(([a, b]) => '<div class="card"><small>' + a + '</small><b class="orb" style="font-size:15px">' + b + '</b></div>').join('');
   const svg = (d) => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
   const rel = (d) => { const o = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 864e5); return o === 0 ? 'HOJE' : o === 1 ? 'ONTEM' : new Date(d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace('.', '').toUpperCase(); };
+  histAtual = vs;
   let ult = '', html = '';
-  vs.forEach((v) => {
+  vs.forEach((v, n) => {
     const t = v.tipo || 'viagem', r = t === 'pernoite' ? v.fim : v.inicio, g = new Date(r).toDateString();
     if (diaHist === 7 && g !== ult) html += '<div class="sec" style="margin:14px 4px 2px;font-size:11px">' + rel(r) + '</div>';
     ult = g;
@@ -726,10 +940,11 @@ async function renderHistorico() {
       corpo = '<b>Pernoite · ' + dur(v.fim - v.inicio) + (v.aberto ? ' (em andamento)' : '') + '</b><span>' + esc(v.local) + '</span><span>Ignição desligada · bateria 12,6 V</span>';
     }
     const [c, ic] = IC_H[t];
-    html += '<div class="item">' + tempoCol + '<span class="ic ' + (v.excesso ? 'la' : c) + '">' + svg(ic) + '</span><span class="tx">' + corpo + '</span></div>';
+    html += '<button type="button" class="item ir" data-i="' + n + '">' + tempoCol + '<span class="ic ' + (v.excesso ? 'la' : c) + '">' + svg(ic) + '</span><span class="tx">' + corpo + '</span><svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>';
   });
   l.innerHTML = html || '<div class="vazio">Nenhuma viagem neste período.</div>';
 }
+$('h-lista').addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b && histAtual[b.dataset.i]) Traj.abrir(histAtual[b.dataset.i]); });
 document.querySelectorAll('.filtros button').forEach((b) => b.addEventListener('click', () => {
   diaHist = Number(b.dataset.dia);
   document.querySelectorAll('.filtros button').forEach((x) => { x.classList.toggle('ativo', x === b); x.setAttribute('aria-pressed', x === b); });
@@ -804,14 +1019,17 @@ function rota() {
   if (!logado && h !== 'ajustes' && h !== 'precadastro') h = 'entrar';
   if (logado && (h === 'entrar' || !h)) h = 'painel';
   if (logado && h === 'precadastro') h = 'painel';
-  if (!['entrar', 'painel', 'historico', 'alertas', 'ajustes', 'precadastro'].includes(h)) h = 'painel';
+  if (!['entrar', 'painel', 'historico', 'alertas', 'ajustes', 'precadastro', 'trajeto'].includes(h)) h = 'painel';
+  if (h === 'trajeto' && !Traj.v) { location.hash = '#historico'; return; }
   const id = h === 'precadastro' ? 'precad' : h;
   document.querySelectorAll('.tela').forEach((t) => t.classList.toggle('ativa', t.id === 't-' + id));
-  $('barra').classList.toggle('esconde', h === 'entrar' || h === 'precadastro' || (!logado && h === 'ajustes'));
+  $('barra').classList.toggle('esconde', h === 'entrar' || h === 'precadastro' || h === 'trajeto' || (!logado && h === 'ajustes'));
   document.querySelectorAll('nav.barra a').forEach((a) => a.classList.toggle('ativo', a.dataset.t === h));
   $('selo-demo').classList.toggle('on', cfg.demo && logado);
   $('login-real').style.display = cfg.demo ? 'none' : 'flex';
   $('login-demo').style.display = cfg.demo ? '' : 'none';
+  if (h !== 'trajeto') Traj.parar();
+  if (h === 'trajeto') Traj.montar();
   if (h === 'historico') renderHistorico();
   if (h === 'alertas') renderAlertas();
   if (h === 'ajustes') renderAjustes();
