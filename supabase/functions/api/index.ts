@@ -381,6 +381,7 @@ async function webhookMP(req: Request) {
 // ---------------- pré-cadastro (rota pública, usada pelo app) ----------------
 const PRECO_CHEIO = 64.9, PRECO_PROMO = 54.9; // promoção travada para quem se pré-cadastra
 const TIPOS_VEIC = ["carro", "moto", "caminhao", "outros"];
+const CORES_VEIC = ["Branco", "Preto", "Prata", "Cinza", "Vermelho", "Azul", "Verde", "Amarelo", "Laranja", "Marrom", "Bege", "Dourado", "Vinho", "Rosa"];
 const soDig = (s: unknown) => String(s ?? "").replace(/\D/g, "");
 const limpa = (s: unknown, max: number) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 async function preCadastro(req: Request) {
@@ -394,7 +395,7 @@ async function preCadastro(req: Request) {
   if (b.aceite !== true) return json({ erro: "Marque a autorização para contato." }, 400);
   const lista: Obj[] = Array.isArray(b.veiculos) ? b.veiculos.slice(0, 5) : [];
   const veics = lista.map((v) => ({
-    tipo: TIPOS_VEIC.includes(v?.tipo) ? v.tipo : "carro", marca: limpa(v?.marca, 40), modelo: limpa(v?.modelo, 40),
+    tipo: TIPOS_VEIC.includes(v?.tipo) ? v.tipo : "carro", marca: limpa(v?.marca, 40), modelo: limpa(v?.modelo, 40), cor: CORES_VEIC.includes(v?.cor) ? v.cor : null,
     ano: Number(v?.ano) >= 1950 && Number(v?.ano) <= new Date().getFullYear() + 1 ? Number(v.ano) : null,
     placa: limpa(v?.placa, 8).toUpperCase().replace(/[^A-Z0-9]/g, "") || null,
   })).filter((v) => v.marca || v.modelo);
@@ -410,7 +411,7 @@ async function preCadastro(req: Request) {
   const { count: jaTem } = await db.from("clientes").select("id", { count: "exact", head: true }).eq("email", email);
   if (jaTem) return json({ ok: true, valor: PRECO_PROMO });
 
-  const obs = `Pré-cadastro pelo app. Promoção travada: ${brl(PRECO_PROMO)}/mês (preço cheio ${brl(PRECO_CHEIO)}).`;
+  const obs = `Pré-cadastro pelo app. Promoção travada: ${brl(PRECO_PROMO)}/mês por 12 meses (preço cheio ${brl(PRECO_CHEIO)}). Instalação com 50% de desconto (R$ 49,95 em vez de R$ 99,90). Pagamento só no ato da instalação.`;
   const { data: cli, error } = await db.from("clientes").insert({
     nome, email, whatsapp: zap, tipo_pessoa: "PF", valor_mensal: PRECO_PROMO, dia_vencimento: 10, status: "pre_cadastro", observacoes: obs,
   }).select().single();

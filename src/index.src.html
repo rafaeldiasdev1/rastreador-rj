@@ -1093,7 +1093,8 @@ function pcVeiculo() {
   d.innerHTML = '<h2><span>VEÍCULO ' + n + '</span>' + (n > 1 ? '<button type="button" data-rm>remover</button>' : '') + '</h2>' +
     '<label class="campo">Tipo<select data-k="tipo"><option value="carro">Carro</option><option value="moto">Moto</option><option value="caminhao">Caminhão</option><option value="outros">Outro</option></select></label>' +
     '<div class="lin"><label class="campo">Marca<input data-k="marca" placeholder="Chevrolet" maxlength="40"></label><label class="campo">Modelo<input data-k="modelo" placeholder="Onix" maxlength="40"></label></div>' +
-    '<div class="lin"><label class="campo">Ano (opcional)<input data-k="ano" inputmode="numeric" placeholder="2022" maxlength="4"></label><label class="campo">Placa (opcional)<input data-k="placa" placeholder="ABC1D23" maxlength="8" autocapitalize="characters"></label></div>';
+    '<div class="lin"><label class="campo">Cor<select data-k="cor"><option value="">Selecione</option>' + Object.keys(CORES).map((c) => '<option value="' + c[0].toUpperCase() + c.slice(1) + '">' + c[0].toUpperCase() + c.slice(1) + '</option>').join('') + '</select></label><label class="campo">Ano (opcional)<input data-k="ano" inputmode="numeric" placeholder="2022" maxlength="4"></label></div>' +
+    '<label class="campo">Placa (opcional)<input data-k="placa" placeholder="ABC1D23" maxlength="8" autocapitalize="characters"></label>';
   const rm = d.querySelector('[data-rm]');
   if (rm) rm.addEventListener('click', () => { d.remove(); [...$('pc-veics').children].forEach((c, i) => { c.querySelector('h2 span').textContent = 'VEÍCULO ' + (i + 1); }); $('pc-add').style.display = ''; });
   $('pc-veics').appendChild(d);
