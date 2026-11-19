@@ -72,6 +72,7 @@ nav.barra.esconde{display:none}
 .ic.la{background:rgba(255,138,61,.14);color:var(--la)}
 .ic.ci{background:rgba(56,214,245,.12);color:var(--ci)}
 .item .tx{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.tile-escuro{filter:invert(1) hue-rotate(180deg) brightness(.82) contrast(.92) saturate(.7)}
 .tela-traj{position:fixed;inset:0;padding:0;z-index:900;background:var(--bg)}
 #tj-mapa{position:absolute;inset:0;background:#0b0d10}
 .tj-voltar{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));z-index:1000;background:rgba(21,24,29,.92)}
@@ -675,6 +676,10 @@ const Traccar = {
   }
 };
 
+/* Mapa base: OpenStreetMap com filtro escuro (o CARTO passou a exigir chave de API) */
+function camadaMapa(mapa) {
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'tile-escuro', attribution: '© OpenStreetMap' }).addTo(mapa);
+}
 async function leafletPronto() {
   if (window.L) return;
   await new Promise((ok, erro) => {
@@ -693,7 +698,7 @@ const Mapa = {
     await leafletPronto();
     if (!this.leaf) {
       this.leaf = L.map('leaf', { zoomControl: false, attributionControl: true }).setView([-22.9, -43.2], 14);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO' }).addTo(this.leaf);
+      camadaMapa(this.leaf);
     }
     this.posicionar();
   },
@@ -733,7 +738,7 @@ const Traj = {
     try { await leafletPronto(); } catch (e) { $('tj-end').innerHTML = '<small>Não foi possível carregar o mapa. Verifique a internet.</small>'; return; }
     if (!this.mapa) {
       this.mapa = L.map('tj-mapa', { zoomControl: false, attributionControl: true });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO' }).addTo(this.mapa);
+      camadaMapa(this.mapa);
       this.mapa.on('dragstart', () => { if (this.tocando && this.seguir) this.setSeguir(false); });
     }
     if (this.grupo) this.grupo.remove();
