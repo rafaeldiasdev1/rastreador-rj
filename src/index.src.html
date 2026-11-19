@@ -194,7 +194,7 @@ nav.barra.esconde{display:none}
     <div id="login-demo" class="convite">
       <div class="data" aria-live="polite"><span class="n" id="cv-n">--</span><span><small>INAUGURAÇÃO DO APP</small><b id="cv-t">04/01/2027</b></span></div>
       <h2>Em breve, seu carro a um toque de distância.</h2>
-      <p>Enquanto o grande dia não chega, <b style="color:var(--tx)">entre e explore</b>. Um veículo de demonstração mostra, ao vivo, tudo o que você vai ter no seu:</p>
+      <p id="cv-p">Enquanto o grande dia não chega, <b style="color:var(--tx)">entre e explore</b>. Um veículo de demonstração mostra, ao vivo, tudo o que você vai ter no seu:</p>
       <ul>
         <li><i>●</i><span>Localização em tempo real no mapa</span></li>
         <li><i>●</i><span>Velocidade, ignição, bateria e sinal GPS</span></li>
@@ -202,7 +202,7 @@ nav.barra.esconde{display:none}
         <li><i>●</i><span>Alertas de ignição, cerca e bateria no celular</span></li>
         <li><i>●</i><span>Bloqueio do veículo na palma da mão</span></li>
       </ul>
-      <p class="fim">Toque em ENTRAR e descubra por que vai valer a espera →</p>
+      <p class="fim" id="cv-fim">Toque em ENTRAR e descubra por que vai valer a espera →</p>
     </div>
     <div class="erro" id="l-erro" role="alert"></div>
     <button class="btn" type="submit">ENTRAR</button>
@@ -1063,7 +1063,11 @@ function rota() {
   document.querySelectorAll('nav.barra a').forEach((a) => a.classList.toggle('ativo', a.dataset.t === h));
   $('selo-demo').classList.toggle('on', cfg.demo && logado);
   $('login-real').style.display = cfg.demo ? 'none' : 'flex';
-  $('login-demo').style.display = cfg.demo ? '' : 'none';
+  $('login-demo').style.display = '';
+  $('login-demo').style.order = cfg.demo ? '0' : '-1';
+  $('login-real').style.order = '0';
+  $('cv-p').innerHTML = cfg.demo ? 'Enquanto o grande dia não chega, <b style="color:var(--tx)">entre e explore</b>. Um veículo de demonstração mostra, ao vivo, tudo o que você vai ter no seu:' : 'Tudo o que o app vai oferecer para o seu veículo:';
+  $('cv-fim').style.display = cfg.demo ? '' : 'none';
   if (h !== 'trajeto') Traj.parar();
   if (h === 'trajeto') Traj.montar();
   if (h === 'historico') renderHistorico();
