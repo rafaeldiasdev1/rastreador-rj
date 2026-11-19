@@ -273,15 +273,7 @@ nav.barra.esconde{display:none}
       <g id="carro">
         <circle class="pulso" r="44" fill="rgba(56,214,245,.25)"/>
         <circle r="32" fill="rgba(56,214,245,.08)" stroke="rgba(56,214,245,.5)"/>
-        <g id="carro-rot"><g transform="translate(-15,-28) scale(.652)">
-          <rect x="0" y="27" width="5" height="7" rx="2.5" fill="#f5f7fa"/><rect x="41" y="27" width="5" height="7" rx="2.5" fill="#f5f7fa"/>
-          <rect x="3" y="2" width="40" height="82" rx="16" fill="#f5f7fa"/>
-          <rect x="7" y="4" width="9" height="3" rx="1.5" fill="#38d6f5"/><rect x="30" y="4" width="9" height="3" rx="1.5" fill="#38d6f5"/>
-          <path d="M9 22 Q23 14 37 22 L35 34 Q23 30 11 34 Z" fill="#1b2430"/>
-          <rect x="11" y="37" width="24" height="25" rx="5" fill="#dfe3e8"/>
-          <path d="M11 65 Q23 68 35 65 L36 74 Q23 78 10 74 Z" fill="#1b2430"/>
-          <rect x="7" y="80" width="9" height="3" rx="1.5" fill="#ff8a3d"/><rect x="30" y="80" width="9" height="3" rx="1.5" fill="#ff8a3d"/>
-        </g></g>
+        <g id="carro-rot"></g>
       </g>
     </svg>
     <div class="leaf" id="leaf" hidden></div>
@@ -486,13 +478,18 @@ function rotaGeo(key) {
 /* ============ fonte de dados: DEMONSTRAÇÃO ============ */
 const Demo = {
   timer: null, fase: 'parado', t0: 0, dir: 1, lista: [], viagemAtual: null, sel: 1, salvo: null,
-  frota() { return [{ id: 1, nome: 'ONIX 1.0', sub: '2022 · Branco · simulado', online: true }, { id: 2, nome: 'VEÍCULO 2', sub: 'Exemplo · estacionado', online: true }]; },
+  frota() { return [
+    { id: 1, nome: 'ONIX 1.0', sub: '2022 · Branco · simulado', online: true, tipo: 'carro', cor: 'Branco' },
+    { id: 2, nome: 'MOTO CG 160', sub: 'Exemplo · Vermelho · estacionada', online: true, tipo: 'moto', cor: 'Vermelho' },
+    { id: 3, nome: 'CAMINHÃO BAÚ', sub: 'Exemplo · Azul · estacionado', online: true, tipo: 'caminhao', cor: 'Azul' },
+    { id: 4, nome: 'VAN DE ENTREGAS', sub: 'Exemplo · Amarelo · estacionada', online: true, tipo: 'outros', cor: 'Amarelo' }
+  ]; },
   selecionar(id) {
     if (id === this.sel) return;
     if (this.sel === 1) this.salvo = Object.assign({}, st);
     this.sel = id;
     if (id === 1 && this.salvo) Object.assign(st, this.salvo, { alertas: st.alertas, naoLidos: st.naoLidos });
-    if (id === 2) Object.assign(st, { vel: 0, ign: false, bat: 12.4, sats: 9, bloq: false, pendente: null, frac: 0.62, atual: Date.now(), online: true });
+    if (id !== 1) Object.assign(st, { vel: 0, ign: false, bat: 12.4, sats: 9, bloq: false, pendente: null, frac: { 2: 0.62, 3: 0.3, 4: 0.82 }[id] || 0.5, atual: Date.now(), online: true });
     render();
   },
   iniciar() {
@@ -610,7 +607,7 @@ const Traccar = {
     this.conectarWs();
   },
   frota() {
-    return this.devs.map((d) => { const a = d.attributes || {}; return { id: d.id, nome: a.marca ? (a.marca + ' ' + a.modelo).toUpperCase() : d.name, sub: [a.placa, a.cor, a.ano].filter(Boolean).join(' · '), online: d.status === 'online' }; });
+    return this.devs.map((d) => { const a = d.attributes || {}; return { id: d.id, nome: a.marca ? (a.marca + ' ' + a.modelo).toUpperCase() : d.name, sub: [a.placa, a.cor, a.ano].filter(Boolean).join(' · '), online: d.status === 'online', tipo: tipoDe(d), cor: a.cor }; });
   },
   selecionar(id) {
     this.dev = this.devs.find((d) => d.id === id); store.set('veiculo', id);
@@ -687,11 +684,43 @@ async function leafletPronto() {
     const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; sc.onload = ok; sc.onerror = erro; document.head.appendChild(sc);
   });
 }
+/* ============ veículo no mapa: tipo (carro, moto, caminhão, outros) e cor ============ */
+const CORES = { branco: '#f5f7fa', preto: '#2b2f36', prata: '#c4c9d0', cinza: '#7b838d', vermelho: '#e0343c', azul: '#2f6fe0', verde: '#2fa86a', amarelo: '#f2c230', laranja: '#f08a2c', marrom: '#7a4b2a', bege: '#d8c3a0', dourado: '#c9a24b', vinho: '#7d1f33', rosa: '#e86aa0' };
+const semAcento = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+function corHex(nome) {
+  const t = semAcento(nome); if (/^#[0-9a-f]{6}$/.test(t)) return t;
+  const k = Object.keys(CORES).find((c) => t.startsWith(c.slice(0, 4)));
+  return CORES[k || 'branco'];
+}
+function tipoDe(d) {
+  const a = d.attributes || {};
+  if (['carro', 'moto', 'caminhao', 'outros'].includes(a.tipo)) return a.tipo;
+  return ({ motorcycle: 'moto', truck: 'caminhao', car: 'carro' })[d.category] || 'carro';
+}
+const L_ = '#38d6f5', ESC = '#1b2430';
+const FORMAS = {
+  carro: { w: 46, h: 86, f: (c) => '<rect x="0" y="22" width="5" height="9" rx="2.5" fill="' + ESC + '"/><rect x="41" y="22" width="5" height="9" rx="2.5" fill="' + ESC + '"/><rect x="0" y="58" width="5" height="9" rx="2.5" fill="' + ESC + '"/><rect x="41" y="58" width="5" height="9" rx="2.5" fill="' + ESC + '"/><rect x="3" y="2" width="40" height="82" rx="16" fill="' + c + '" stroke="' + L_ + '" stroke-width="2"/><path d="M9 22 Q23 14 37 22 L35 34 Q23 30 11 34 Z" fill="' + ESC + '"/><rect x="11" y="37" width="24" height="25" rx="5" fill="rgba(0,0,0,.2)"/><path d="M11 65 Q23 68 35 65 L36 74 Q23 78 10 74 Z" fill="' + ESC + '"/><rect x="7" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/><rect x="30" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/><rect x="7" y="80" width="9" height="3" rx="1.5" fill="#ff8a3d"/><rect x="30" y="80" width="9" height="3" rx="1.5" fill="#ff8a3d"/>' },
+  moto: { w: 28, h: 80, f: (c) => '<rect x="10" y="1" width="8" height="17" rx="4" fill="' + ESC + '"/><rect x="10" y="60" width="8" height="19" rx="4" fill="' + ESC + '"/><rect x="1" y="17" width="26" height="4" rx="2" fill="' + ESC + '"/><rect x="0" y="15" width="4" height="4" rx="2" fill="' + L_ + '"/><rect x="24" y="15" width="4" height="4" rx="2" fill="' + L_ + '"/><rect x="7" y="19" width="14" height="42" rx="7" fill="' + c + '" stroke="' + L_ + '" stroke-width="1.6"/><ellipse cx="14" cy="42" rx="7.5" ry="9" fill="rgba(0,0,0,.55)"/><circle cx="14" cy="32" r="5.2" fill="' + c + '" stroke="' + ESC + '" stroke-width="1.4"/><rect x="11" y="74" width="6" height="3" rx="1.5" fill="#ff8a3d"/>' },
+  caminhao: { w: 46, h: 112, f: (c) => '<rect x="3" y="2" width="40" height="31" rx="11" fill="' + c + '" stroke="' + L_ + '" stroke-width="2"/><path d="M9 14 Q23 8 37 14 L36 23 Q23 20 10 23 Z" fill="' + ESC + '"/><rect x="2" y="36" width="42" height="74" rx="5" fill="' + c + '" stroke="' + L_ + '" stroke-width="2"/><rect x="2" y="36" width="42" height="74" rx="5" fill="rgba(0,0,0,.2)"/><path d="M5 58H41M5 80H41" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/><rect x="7" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/><rect x="30" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/><rect x="6" y="106" width="9" height="3" rx="1.5" fill="#ff8a3d"/><rect x="31" y="106" width="9" height="3" rx="1.5" fill="#ff8a3d"/>' },
+  outros: { w: 46, h: 92, f: (c) => '<rect x="3" y="2" width="40" height="88" rx="12" fill="' + c + '" stroke="' + L_ + '" stroke-width="2"/><path d="M9 14 Q23 8 37 14 L36 27 Q23 23 10 27 Z" fill="' + ESC + '"/><rect x="9" y="32" width="28" height="44" rx="5" fill="rgba(0,0,0,.2)"/><rect x="13" y="79" width="20" height="6" rx="3" fill="' + ESC + '"/><rect x="7" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/><rect x="30" y="4" width="9" height="3" rx="1.5" fill="' + L_ + '"/>' }
+};
+function corpoVeic(tipo, cor) { const f = FORMAS[tipo] || FORMAS.carro; return { w: f.w, h: f.h, inner: f.f(corHex(cor)) }; }
+const ESCALA = 0.652;
+
 /* ============ mapa ============ */
 const Mapa = {
   leaf: null, mk: null,
-  carroSvg(curso) {
-    return '<svg class="carmk" viewBox="0 0 46 86" style="transform:rotate(' + curso + 'deg)" aria-hidden="true"><rect x="3" y="2" width="40" height="82" rx="16" fill="#f5f7fa" stroke="#38d6f5" stroke-width="2"/><path d="M9 22 Q23 14 37 22 L35 34 Q23 30 11 34 Z" fill="#1b2430"/><rect x="11" y="37" width="24" height="25" rx="5" fill="#dfe3e8"/><path d="M11 65 Q23 68 35 65 L36 74 Q23 78 10 74 Z" fill="#1b2430"/></svg>';
+  /* ícone do veículo selecionado (tipo + cor) para o Leaflet */
+  icone(curso) {
+    const v = veiculoAtual() || {}, c = corpoVeic(v.tipo || 'carro', v.cor), W = Math.round(c.w * ESCALA), H = Math.round(c.h * ESCALA);
+    return L.divIcon({ className: '', html: '<svg class="carmk" viewBox="0 0 ' + c.w + ' ' + c.h + '" style="width:' + W + 'px;height:' + H + 'px;transform:rotate(' + curso + 'deg)" aria-hidden="true">' + c.inner + '</svg>', iconSize: [W, H], iconAnchor: [W / 2, H / 2] });
+  },
+  /* mapa de demonstração (SVG): redesenha o veículo quando muda o tipo ou a cor */
+  desenharDemo() {
+    const v = veiculoAtual() || {}, chave = (v.tipo || 'carro') + '|' + (v.cor || '');
+    if (this.chaveDemo === chave) return; this.chaveDemo = chave;
+    const c = corpoVeic(v.tipo || 'carro', v.cor);
+    $('carro-rot').innerHTML = '<g transform="translate(' + (-c.w * ESCALA / 2).toFixed(1) + ',' + (-c.h * ESCALA / 2).toFixed(1) + ') scale(' + ESCALA + ')">' + c.inner + '</g>';
   },
   async real() {
     $('mapa-svg').style.display = 'none'; $('leaf').hidden = false;
@@ -705,6 +734,7 @@ const Mapa = {
   demo() { $('mapa-svg').style.display = ''; $('leaf').hidden = true; },
   posicionar() {
     if (cfg.demo) {
+      this.desenharDemo();
       const rota = $('rota'), L0 = rota.getTotalLength(), f = Math.max(0, Math.min(1, st.frac));
       const p = rota.getPointAtLength(f * L0), q = rota.getPointAtLength(Math.min(L0, f * L0 + 1));
       let ang = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90; if (Demo.dir < 0) ang += 180;
@@ -714,7 +744,7 @@ const Mapa = {
     }
     if (!this.leaf || st.lat == null) return;
     const ll = [st.lat, st.lon];
-    const icon = L.divIcon({ className: '', html: this.carroSvg(st.curso), iconSize: [30, 56], iconAnchor: [15, 28] });
+    const icon = this.icone(st.curso);
     if (!this.mk) { this.mk = L.marker(ll, { icon }).addTo(this.leaf); this.leaf.setView(ll, 16); }
     else { this.mk.setLatLng(ll); this.mk.setIcon(icon); }
   }
@@ -779,7 +809,7 @@ const Traj = {
       let mi = 0, md = 1e9; pts.forEach((p, i) => { const d = distKm(p, this.g.ex); if (d < md) { md = d; mi = i; } });
       this.uex = cum[mi] / km;
     }
-    const ic = L.divIcon({ className: '', html: Mapa.carroSvg(0), iconSize: [30, 56], iconAnchor: [15, 28] });
+    const ic = Mapa.icone(0);
     this.carro = L.marker(pts[0], { icon: ic, zIndexOffset: 1000 }).addTo(this.grupo);
     setTimeout(() => this.mapa.fitBounds(lin.getBounds(), { padding: [40, 40], paddingBottomRight: [40, 330] }), 90);
     const dm = v.fim - v.inicio, mediaK = v.media || Math.round(km / (dm / 3600000));
@@ -849,11 +879,12 @@ function escutaLiberada() {
   return !cfg.demo && !!d && !!d.phone && (d.attributes || {}).escuta === true;
 }
 
+const ICONE_TIPO = { carro: '<path d="M5 17h14M6 17l1.5-6h9L18 17M7 11l1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/>', moto: '<circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/><path d="M6 16l4-7h4l4 7M10 9l-1-3h3"/>', caminhao: '<path d="M2 6h12v11H2zM14 10h4l3 3v4h-7"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>', outros: '<path d="M3 17V8h11l5 5v4z"/><circle cx="7" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/>' };
 function frota() { try { return fonte().frota() || []; } catch (e) { return []; } }
 function veiculoAtual() { const id = cfg.demo ? Demo.sel : (Traccar.dev && Traccar.dev.id); return frota().find((v) => v.id === id); }
 function abrirFrota() {
   const atual = veiculoAtual();
-  $('frota-lista').innerHTML = frota().map((v) => '<button data-id="' + v.id + '" class="' + (atual && atual.id === v.id ? 'sel' : '') + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M6 17l1.5-6h9L18 17M7 11l1.5-4h7L17 11"/><circle cx="8" cy="17" r="1.5"/><circle cx="16" cy="17" r="1.5"/></svg><span style="display:flex;flex-direction:column;gap:3px;flex:1"><b style="font-size:15px">' + esc(v.nome) + '</b><span style="font-size:12px;color:var(--mu)">' + esc(v.sub) + '</span></span><span class="pill' + (v.online ? '' : ' off') + '"><i></i>' + (v.online ? 'Online' : 'Offline') + '</span></button>').join('');
+  $('frota-lista').innerHTML = frota().map((v) => '<button data-id="' + v.id + '" class="' + (atual && atual.id === v.id ? 'sel' : '') + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONE_TIPO[v.tipo] || ICONE_TIPO.carro) + '</svg><span style="display:flex;flex-direction:column;gap:3px;flex:1"><b style="font-size:15px"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;border:1px solid rgba(255,255,255,.35);background:' + corHex(v.cor) + '"></i>' + esc(v.nome) + '</b><span style="font-size:12px;color:var(--mu)">' + esc(v.sub) + '</span></span><span class="pill' + (v.online ? '' : ' off') + '"><i></i>' + (v.online ? 'Online' : 'Offline') + '</span></button>').join('');
   $('frota-dlg').classList.add('on');
 }
 $('v-trocar').addEventListener('click', abrirFrota);

@@ -462,6 +462,7 @@ function linhaMsg(x, comCliente) {
   return `<tr><td class="pq mu" style="white-space:nowrap">${dataHora(x.created_at)}</td>${comCliente ? `<td>${x.clientes ? `<a href="#cliente-c-${x.cliente_id}">${esc(x.clientes.nome)}</a>` : '—'}</td>` : ''}<td>${x.canal === 'email' ? 'E-mail' : 'WhatsApp'}</td><td>${esc(tipos[x.tipo] || x.tipo)}</td><td><span class="badge ${st}">${esc(x.status)}</span></td><td class="pq mu" style="max-width:420px">${esc(x.detalhe || '')}</td></tr>`;
 }
 
+const COR_OPCOES = ['Branco', 'Preto', 'Prata', 'Cinza', 'Vermelho', 'Azul', 'Verde', 'Amarelo', 'Laranja', 'Marrom', 'Bege', 'Dourado', 'Vinho', 'Rosa'];
 const TIPOS_VEIC = { carro: 'Carro', moto: 'Moto', caminhao: 'Caminhão', outros: 'Outros' };
 
 function formVeiculo(cli, v) {
@@ -473,7 +474,7 @@ function formVeiculo(cli, v) {
     <label class="campo req c4"><span>Modelo</span><input name="modelo" required placeholder="Onix 1.0" value="${esc(v.modelo)}"></label>
     <label class="campo req c4"><span>Placa</span><input name="placa" required placeholder="ABC1D23" maxlength="8" style="text-transform:uppercase" value="${esc(v.placa)}"></label>
     <label class="campo c4"><span>Ano</span><input name="ano" inputmode="numeric" maxlength="4" value="${esc(v.ano)}"></label>
-    <label class="campo c4"><span>Cor</span><input name="cor" value="${esc(v.cor)}"></label>
+    <label class="campo c4"><span>Cor (aparece no mapa do app)</span><select name="cor"><option value="">Não informada</option>${[...COR_OPCOES, ...(v.cor && !COR_OPCOES.includes(v.cor) ? [v.cor] : [])].map((n) => `<option value="${esc(n)}" ${v.cor === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
     <label class="campo c4"><span>Situação</span><select name="ativo"><option value="1" ${v.ativo ? 'selected' : ''}>Ativo</option><option value="0" ${!v.ativo ? 'selected' : ''}>Inativo</option></select></label>
     <div class="sec">RASTREADOR</div>
     <label class="campo c4"><span>Modelo do rastreador</span><input name="modelo_rastreador" value="${esc(v.modelo_rastreador)}"></label>
