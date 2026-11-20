@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Área do Instalador · RJ Domótica</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#0b0d10; --sf:#15181d; --ln:#262a31; --tx:#e8eaed; --mu:#9aa3ad; --ci:#38d6f5; --la:#ff8a3d; --ok:#3ddc84; --er:#ff5c5c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--tx); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  header .marca { color: var(--ci); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; flex: 1; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  p.mu, .mu { color: var(--mu); }
+  .card { background: var(--sf); border: 1px solid var(--ln); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  label.f { display: block; font-size: 13px; color: var(--mu); margin: 10px 0 4px; }
+  input[type=text], input[type=email], input[type=password], input[type=number], textarea {
+    width: 100%; background: #0f1216; border: 1px solid var(--ln); color: var(--tx); border-radius: 10px; padding: 11px 12px; font: inherit; }
+  textarea { min-height: 80px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--ci); outline-offset: 1px; }
+  button, .btn { appearance: none; border: 0; background: var(--ci); color: #06222a; font: inherit; font-weight: 700; padding: 11px 16px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  button.sec, .btn.sec { background: transparent; color: var(--tx); border: 1px solid var(--ln); }
+  button.go { background: var(--la); color: #2a1400; width: 100%; padding: 14px; font-size: 16px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row > .grow { flex: 1; min-width: 140px; }
+  .msg { padding: 10px 12px; border-radius: 10px; font-size: 14px; margin: 10px 0; }
+  .msg.er { background: #2a1214; color: #ffb3b3; border: 1px solid #5a2026; }
+  .msg.ok { background: #0f2619; color: #a8f0c6; border: 1px solid #1f5a39; }
+  .lista { list-style: none; padding: 0; margin: 0; }
+  .lista li { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--ln); cursor: pointer; }
+  .lista li:first-child { border-top: 0; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--ln); color: var(--mu); white-space: nowrap; }
+  .tag.concluida, .tag.liberado, .tag.pago { color: var(--ok); border-color: #1f5a39; }
+  .tag.reprovada, .tag.bloqueado { color: var(--er); border-color: #5a2026; }
+  .tag.em_execucao { color: var(--ci); border-color: #1d4f5a; }
+  .foto { border: 1px solid var(--ln); border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .foto.feita { border-color: #1f5a39; }
+  .foto h3 { font-size: 15px; margin: 0 0 2px; display: flex; gap: 8px; align-items: center; }
+  .foto .ico { width: 22px; height: 22px; border-radius: 99px; display: grid; place-items: center; font-size: 13px; background: var(--ln); flex: none; }
+  .foto.feita .ico { background: var(--ok); color: #06210f; }
+  .foto img.prev { width: 100%; max-height: 260px; object-fit: contain; background: #000; border-radius: 8px; margin-top: 8px; }
+  .foto .geo { font-size: 12px; color: var(--mu); margin-top: 4px; }
+  input[type=file] { color: var(--mu); font-size: 14px; margin-top: 8px; max-width: 100%; }
+  canvas.ass { width: 100%; height: 180px; background: #fff; border-radius: 10px; touch-action: none; display: block; }
+  .info { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+  .info dt { color: var(--mu); }
+  .info dd { margin: 0; }
+  .oculto { display: none !important; }
+  .prog { height: 6px; background: var(--ln); border-radius: 99px; overflow: hidden; margin: 8px 0 2px; }
+  .prog i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .3s; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="marca">RJ Domótica · Área do instalador</span>
+    <button id="sair" class="sec oculto" type="button">Sair</button>
+  </header>
+
+  <!-- LOGIN -->
+  <section id="v-login" class="oculto">
+    <h1>Entrar</h1>
+    <p class="mu">Use o e-mail e a senha cadastrados pela RJ Domótica.</p>
+    <form id="f-login" class="card">
+      <label class="f" for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label class="f" for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" required>
+      <div id="login-msg"></div>
+      <div class="row" style="margin-top:14px"><button type="submit">Entrar</button>
+        <button type="button" class="sec" id="esqueci">Esqueci a senha</button></div>
+    </form>
+  </section>
+
+  <!-- INÍCIO -->
+  <section id="v-inicio" class="oculto">
+    <h1 id="ola">Olá</h1>
+    <div class="card">
+      <h2>Abrir ordem de serviço</h2>
+      <form id="f-os" class="row">
+        <input id="numero" class="grow" type="number" inputmode="numeric" min="1" placeholder="Número da OS" required>
+        <button type="submit">Abrir</button>
+      </form>
+      <div id="os-msg"></div>
+    </div>
+    <div class="card">
+      <h2>Curso de instalação</h2>
+      <p class="mu" style="margin:0 0 10px">Aulas, apostila em PDF e checklist de entrega.</p>
+      <a class="btn sec" href="../curso/">Abrir o curso</a>
+    </div>
+    <div class="card">
+      <h2>Minhas ordens de serviço</h2>
+      <ul class="lista" id="minhas"><li class="mu">Carregando…</li></ul>
+    </div>
+  </section>
+
+  <!-- ORDEM DE SERVIÇO -->
+  <section id="v-os" class="oculto">
+    <button class="sec" type="button" id="voltar" style="margin-bottom:12px">‹ Voltar</button>
+    <h1 id="os-titulo">OS</h1>
+    <div class="row" style="margin-bottom:12px"><span class="tag" id="os-status"></span><span class="tag" id="os-pag"></span></div>
+    <div id="os-reprov" class="msg er oculto"></div>
+
+    <div class="card">
+      <h2>Veículo</h2>
+      <dl class="info" id="os-info"></dl>
+    </div>
+
+    <div class="card">
+      <h2>Fotos obrigatórias</h2>
+      <p class="mu" style="margin:0">Tire as fotos no local da instalação, com a localização do celular ligada. A localização é registrada no momento do envio de cada foto.</p>
+      <div class="prog"><i id="fotos-prog"></i></div>
+      <small class="mu" id="fotos-cont"></small>
+      <div id="fotos"></div>
+    </div>
+
+    <div class="card" id="encerrar-card">
+      <h2>Encerramento</h2>
+      <label class="f" for="resp">Responsável pelo veículo que autorizou a instalação</label>
+      <input id="resp" type="text" autocomplete="off" placeholder="Nome completo">
+      <label class="f" for="resp-doc">Documento do responsável (CPF ou RG), opcional</label>
+      <input id="resp-doc" type="text" autocomplete="off">
+      <label class="f" for="obs">Observações finais</label>
+      <textarea id="obs" placeholder="Quem recebeu o veículo, parentesco ou vínculo com o cliente, ocorrências, avarias que já existiam…"></textarea>
+      <label class="f">Assinatura do responsável</label>
+      <canvas class="ass" id="ass"></canvas>
+      <div class="row" style="margin:8px 0 14px"><button type="button" class="sec" id="limpar-ass">Limpar assinatura</button></div>
+      <div id="enc-msg"></div>
+      <button type="button" class="go" id="encerrar">Encerrar instalação</button>
+      <p class="mu" style="font-size:13px;margin:8px 0 0">O encerramento só é aceito com as 5 fotos, o responsável, as observações e a assinatura. Ao encerrar, o pagamento da instalação é liberado.</p>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var SUPABASE_URL = "https://xpafmvjlwgmhmvhfsqrg.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_78XLEJvUXYmVjzEzfEiz6Q_l3c5EiTw";
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  var FOTOS = [
+    { tipo: "rastreador_imei", titulo: "Rastreador com numeração legível", dica: "Etiqueta do IMEI nítida e inteira na foto." },
+    { tipo: "local_acomodacao", titulo: "Local de acomodação", dica: "Onde o rastreador foi fixado, mostrando a fixação." },
+    { tipo: "bomba_solda", titulo: "Fio da bomba cortado e soldado", dica: "As emendas com solda, antes de isolar." },
+    { tipo: "bomba_isolada", titulo: "Mesma emenda já isolada", dica: "A mesma emenda com termorretrátil." },
+    { tipo: "local_afastada", titulo: "Foto afastada do esconderijo", dica: "Visão geral do local, com o acabamento já montado." }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var os = null;
+
+  function mostrar(v) {
+    ["v-login", "v-inicio", "v-os"].forEach(function (id) { $(id).classList.toggle("oculto", id !== v); });
+    $("sair").classList.toggle("oculto", v === "v-login");
+    window.scrollTo(0, 0);
+  }
+  function msg(el, texto, tipo) { $(el).innerHTML = texto ? '<div class="msg ' + (tipo || "er") + '"></div>' : ""; if (texto) $(el).firstChild.textContent = texto; }
+  function erroTexto(e) { return (e && (e.message || e.error_description)) || String(e); }
+  var ROTULO = { aberta: "Aberta", em_execucao: "Em execução", concluida: "Concluída", reprovada: "Reprovada", cancelada: "Cancelada",
+                 pendente: "Pagamento pendente", liberado: "Pagamento liberado", pago: "Pago", bloqueado: "Pagamento bloqueado" };
+
+  // ── Localização: sempre nova, nunca do cache ──
+  function localizacao() {
+    return new Promise(function (ok, falha) {
+      if (!navigator.geolocation) return falha(new Error("Este aparelho não informa a localização."));
+      navigator.geolocation.getCurrentPosition(function (p) {
+        ok({ lat: p.coords.latitude, lng: p.coords.longitude, prec: p.coords.accuracy, em: new Date(p.timestamp || Date.now()).toISOString() });
+      }, function (e) {
+        falha(new Error(e.code === 1 ? "Permita o acesso à localização para enviar a foto." : "Não foi possível obter a localização. Vá para um local aberto e tente de novo."));
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    });
+  }
+
+  // ── Reduz a foto e grava OS, data e coordenadas na imagem ──
+  function prepararImagem(arquivo, geo, rotulo) {
+    return new Promise(function (ok, falha) {
+      var img = new Image(), url = URL.createObjectURL(arquivo);
+      img.onload = function () {
+        var max = 1600, k = Math.min(1, max / Math.max(img.width, img.height));
+        var c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        var g = c.getContext("2d"); g.drawImage(img, 0, 0, c.width, c.height);
+        var txt = rotulo + " · " + new Date().toLocaleString("pt-BR") + " · " + geo.lat.toFixed(6) + ", " + geo.lng.toFixed(6);
+        var fs = Math.max(14, Math.round(c.width / 55));
+        g.font = "600 " + fs + "px system-ui, sans-serif";
+        g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(0, c.height - fs * 1.9, c.width, fs * 1.9);
+        g.fillStyle = "#fff"; g.fillText(txt, fs * 0.6, c.height - fs * 0.6);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) { b ? ok(b) : falha(new Error("Falha ao processar a imagem.")); }, "image/jpeg", 0.85);
+      };
+      img.onerror = function () { falha(new Error("Arquivo de imagem inválido.")); };
+      img.src = url;
+    });
+  }
+
+  // ── Login ──
+  $("f-login").addEventListener("submit", async function (ev) {
+    ev.preventDefault(); msg("login-msg", "");
+    var r = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("senha").value });
+    if (r.error) return msg("login-msg", "E-mail ou senha incorretos.");
+    iniciar();
+  });
+  $("esqueci").addEventListener("click", async function () {
+    var e = $("email").value.trim();
+    if (!e) return msg("login-msg", "Digite seu e-mail acima e toque de novo em \"Esqueci a senha\".");
+    await sb.auth.resetPasswordForEmail(e, { redirectTo: location.href.split("#")[0] });
+    msg("login-msg", "Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.", "ok");
+  });
+  $("sair").addEventListener("click", async function () { await sb.auth.signOut(); mostrar("v-login"); });
+
+  async function iniciar() {
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s) return mostrar("v-login");
+    var r = await sb.rpc("is_instalador");
+    if (r.error || !r.data) { await sb.auth.signOut(); mostrar("v-login"); return msg("login-msg", "Este usuário não tem acesso de instalador. Fale com a RJ Domótica."); }
+    var me = await sb.from("instaladores").select("nome").eq("user_id", s.user.id).maybeSingle();
+    $("ola").textContent = "Olá, " + ((me.data && me.data.nome) || "instalador").split(" ")[0];
+    var p = new URLSearchParams(location.search).get("os");
+    if (p) { $("numero").value = p; return abrirOS(p); }
+    mostrar("v-inicio"); carregarMinhas();
+  }
+
+  async function carregarMinhas() {
+    var r = await sb.rpc("os_minhas"), ul = $("minhas");
+    ul.innerHTML = "";
+    if (r.error) { ul.innerHTML = '<li class="mu"></li>'; ul.firstChild.textContent = erroTexto(r.error); return; }
+    if (!r.data.length) { ul.innerHTML = '<li class="mu">Nenhuma ordem de serviço ainda.</li>'; return; }
+    r.data.forEach(function (o) {
+      var li = document.createElement("li");
+      li.innerHTML = '<b></b><span class="grow mu" style="flex:1"></span><span class="tag"></span>';
+      li.children[0].textContent = "OS " + o.numero;
+      li.children[1].textContent = (o.placa || "") + " · " + o.cliente;
+      var t = o.status === "concluida" ? o.pagamento_status : o.status;
+      li.children[2].textContent = ROTULO[t]; li.children[2].classList.add(t);
+      li.addEventListener("click", function () { abrirOS(o.numero); });
+      ul.appendChild(li);
+    });
+  }
+
+  $("f-os").addEventListener("submit", function (ev) { ev.preventDefault(); abrirOS($("numero").value); });
+  $("voltar").addEventListener("click", function () { history.replaceState(null, "", location.pathname); mostrar("v-inicio"); carregarMinhas(); });
+
+  async function abrirOS(numero) {
+    msg("os-msg", "");
+    var r = await sb.rpc("os_abrir", { p_numero: parseInt(numero, 10) });
+    if (r.error) { mostrar("v-inicio"); carregarMinhas(); return msg("os-msg", erroTexto(r.error)); }
+    os = r.data;
+    history.replaceState(null, "", location.pathname + "?os=" + os.numero);
+    renderOS(); mostrar("v-os");
+  }
+
+  function renderOS() {
+    $("os-titulo").textContent = "OS " + os.numero;
+    $("os-status").textContent = ROTULO[os.status]; $("os-status").className = "tag " + os.status;
+    $("os-pag").textContent = ROTULO[os.pagamento_status]; $("os-pag").className = "tag " + os.pagamento_status;
+    $("os-reprov").classList.toggle("oculto", os.status !== "reprovada");
+    if (os.status === "reprovada") $("os-reprov").textContent = "Reprovada pela RJ Domótica: " + (os.motivo_reprovacao || "corrija as fotos e encerre de novo.");
+    var v = os.veiculo || {}, info = $("os-info"); info.innerHTML = "";
+    [["Cliente", os.cliente], ["Local", [os.bairro, os.cidade].filter(Boolean).join(", ")], ["Veículo", [v.marca, v.modelo, v.ano].filter(Boolean).join(" ")],
+     ["Cor", v.cor], ["Placa", v.placa], ["IMEI", v.imei]].forEach(function (p) {
+      if (!p[1]) return; var dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = p[0]; dd.textContent = p[1]; info.appendChild(dt); info.appendChild(dd);
+    });
+    var editavel = os.status === "em_execucao" || os.status === "reprovada";
+    $("encerrar-card").classList.toggle("oculto", !editavel);
+    if (os.status === "concluida") { $("resp").value = os.responsavel_nome || ""; }
+    renderFotos(editavel);
+  }
+
+  function renderFotos(editavel) {
+    var cont = $("fotos"); cont.innerHTML = "";
+    var feitas = 0;
+    FOTOS.forEach(function (f, i) {
+      var reg = (os.fotos || []).find(function (x) { return x.tipo === f.tipo; });
+      if (reg) feitas++;
+      var d = document.createElement("div"); d.className = "foto" + (reg ? " feita" : "");
+      d.innerHTML = '<h3><span class="ico">' + (reg ? "✓" : (i + 1)) + '</span><span></span></h3><div class="mu" style="font-size:13px"></div>' +
+        '<img class="prev oculto" alt="">' + '<div class="geo"></div>' +
+        (editavel ? '<label class="f">Breve descrição da foto</label><textarea rows="2" placeholder="Ex.: rastreador fixado atrás do porta-luvas, lado do passageiro"></textarea>' +
+        '<input type="file" accept="image/*" capture="environment"><div class="r"></div>' +
+        '<button type="button" style="margin-top:8px">' + (reg ? "Substituir foto" : "Enviar foto") + '</button>' : '<p class="desc"></p>');
+      d.querySelector("h3 span:last-child").textContent = f.titulo;
+      d.children[1].textContent = f.dica;
+      if (reg) {
+        d.querySelector(".geo").textContent = "Localização: " + reg.latitude.toFixed(5) + ", " + reg.longitude.toFixed(5) + " · " + new Date(reg.enviada_em).toLocaleString("pt-BR");
+        sb.storage.from("instalacoes").createSignedUrl(reg.path, 600).then(function (u) {
+          if (u.data) { var im = d.querySelector("img.prev"); im.src = u.data.signedUrl; im.classList.remove("oculto"); }
+        });
+        if (editavel) d.querySelector("textarea").value = reg.descricao; else d.querySelector(".desc").textContent = reg.descricao;
+      }
+      if (editavel) d.querySelector("button").addEventListener("click", function () { enviarFoto(f, d); });
+      cont.appendChild(d);
+    });
+    $("fotos-prog").style.width = (feitas / FOTOS.length * 100) + "%";
+    $("fotos-cont").textContent = feitas + " de " + FOTOS.length + " fotos enviadas";
+  }
+
+  async function enviarFoto(f, d) {
+    var btn = d.querySelector("button"), arq = d.querySelector("input[type=file]").files[0], desc = d.querySelector("textarea").value.trim();
+    var out = d.querySelector(".r");
+    var aviso = function (t, tipo) { out.innerHTML = '<div class="msg ' + (tipo || "er") + '"></div>'; out.firstChild.textContent = t; };
+    if (!arq) return aviso("Tire ou escolha a foto primeiro.");
+    if (desc.length < 5) return aviso("Escreva uma breve descrição da foto.");
+    btn.disabled = true; btn.textContent = "Obtendo localização…";
+    try {
+      var geo = await localizacao();
+      btn.textContent = "Enviando…";
+      var blob = await prepararImagem(arq, geo, "OS " + os.numero);
+      var path = os.id + "/" + f.tipo + "-" + Date.now() + ".jpg";
+      var up = await sb.storage.from("instalacoes").upload(path, blob, { contentType: "image/jpeg" });
+      if (up.error) throw up.error;
+      var antiga = (os.fotos || []).find(function (x) { return x.tipo === f.tipo; });
+      if (antiga) { var del = await sb.from("os_fotos").delete().eq("os_id", os.id).eq("tipo", f.tipo); if (del.error) throw del.error; }
+      var ins = await sb.from("os_fotos").insert({ os_id: os.id, tipo: f.tipo, path: path, descricao: desc,
+        latitude: geo.lat, longitude: geo.lng, precisao_m: geo.prec, geo_capturada_em: geo.em });
+      if (ins.error) throw ins.error;
+      await abrirOS(os.numero);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "Tentar de novo"; aviso(erroTexto(e));
+    }
+  }
+
+  // ── Assinatura ──
+  var cv = $("ass"), cx = cv.getContext("2d"), desenhando = false, assinou = false;
+  function ajustarCanvas() {
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    if (!r.width) return;
+    cv.width = r.width * dpr; cv.height = r.height * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = "#fff"; cx.fillRect(0, 0, r.width, r.height);
+    cx.lineWidth = 2.4; cx.lineCap = "round"; cx.lineJoin = "round"; cx.strokeStyle = "#111"; assinou = false;
+  }
+  function ponto(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  cv.addEventListener("pointerdown", function (e) { if (!cv.width || cv.width < 10) ajustarCanvas(); desenhando = true; cv.setPointerCapture(e.pointerId); var p = ponto(e); cx.beginPath(); cx.moveTo(p.x, p.y); });
+  cv.addEventListener("pointermove", function (e) { if (!desenhando) return; var p = ponto(e); cx.lineTo(p.x, p.y); cx.stroke(); assinou = true; });
+  ["pointerup", "pointercancel"].forEach(function (t) { cv.addEventListener(t, function () { desenhando = false; }); });
+  $("limpar-ass").addEventListener("click", ajustarCanvas);
+  new ResizeObserver(function () { if (!assinou) ajustarCanvas(); }).observe(cv);
+
+  $("encerrar").addEventListener("click", async function () {
+    msg("enc-msg", "");
+    var btn = this, faltam = FOTOS.filter(function (f) { return !(os.fotos || []).some(function (x) { return x.tipo === f.tipo; }); });
+    if (faltam.length) return msg("enc-msg", "Faltam fotos: " + faltam.map(function (f) { return f.titulo; }).join("; ") + ".");
+    if ($("resp").value.trim().length < 3) return msg("enc-msg", "Informe o nome do responsável pelo veículo.");
+    if ($("obs").value.trim().length < 10) return msg("enc-msg", "Preencha as observações finais.");
+    if (!assinou) return msg("enc-msg", "Colete a assinatura do responsável.");
+    btn.disabled = true; btn.textContent = "Obtendo localização…";
+    try {
+      var geo = await localizacao();
+      btn.textContent = "Encerrando…";
+      var blob = await new Promise(function (ok) { cv.toBlob(ok, "image/png"); });
+      var path = os.id + "/assinatura-" + Date.now() + ".png";
+      var up = await sb.storage.from("instalacoes").upload(path, blob, { contentType: "image/png" });
+      if (up.error) throw up.error;
+      var r = await sb.rpc("os_encerrar", { p_os: os.id, p_responsavel_nome: $("resp").value, p_responsavel_documento: $("resp-doc").value,
+        p_observacoes: $("obs").value, p_assinatura_path: path, p_lat: geo.lat, p_lng: geo.lng });
+      if (r.error) throw r.error;
+      await abrirOS(os.numero);
+      window.scrollTo(0, 0);
+    } catch (e) { msg("enc-msg", erroTexto(e)); }
+    btn.disabled = false; btn.textContent = "Encerrar instalação";
+  });
+
+  sb.auth.onAuthStateChange(function (ev) { if (ev === "PASSWORD_RECOVERY") { var n = prompt("Digite a nova senha (mínimo 8 caracteres):"); if (n) sb.auth.updateUser({ password: n }).then(function (r) { alert(r.error ? erroTexto(r.error) : "Senha alterada."); }); } });
+  iniciar();
+})();
+</script>
+</body>
+</html>
