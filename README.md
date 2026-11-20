@@ -4,6 +4,8 @@ Plataforma de rastreamento veicular: app do cliente (PWA), painel do administrad
 
 - App do cliente: https://app.rjdomotica.com/
 - Painel do administrador: https://app.rjdomotica.com/admin/
+- Área do instalador (ordens de serviço): https://app.rjdomotica.com/instalador/
+- Curso de instalação (só para instaladores e admin): https://app.rjdomotica.com/curso/
 - **Configuração das integrações: veja [GUIA.md](GUIA.md)**
 
 ## Pastas
@@ -14,6 +16,7 @@ Plataforma de rastreamento veicular: app do cliente (PWA), painel do administrad
 - `icons/`: logo e ícones.
 - `build.py`: gera `docs/`, a pasta publicada no GitHub Pages.
 - `docs/`: o app pronto (index.html, manifest, service worker e ícones).
+- `docs/admin/os.html`, `docs/instalador/`, `docs/curso/`: tela "Instalação e OS" do admin, área do instalador e página do curso. São arquivos prontos, editados direto em `docs/` (o `build.py` não mexe neles). O conteúdo das aulas fica no bucket privado `curso` do Supabase.
 
 Para gerar de novo depois de mudar algo: `python3 build.py`
 
