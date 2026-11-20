@@ -435,8 +435,10 @@ const URL_INSTALADOR = "https://app.rjdomotica.com/instalador/";
 async function linkAcessoInstalador(email: string) {
   // link de uso único para o instalador criar a própria senha (vale pelo prazo configurado no Supabase Auth)
   const { data, error } = await db.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: URL_INSTALADOR } });
-  if (error || !data?.properties?.action_link) throw new Error("Não foi possível gerar o link de acesso: " + (error?.message || "sem link"));
-  return { link: data.properties.action_link, user_id: data.user.id };
+  if (error || !data?.properties?.hashed_token) throw new Error("Não foi possível gerar o link de acesso: " + (error?.message || "sem link"));
+  // O código vai depois do "#": a prévia do WhatsApp/e-mail abre a página mas não gasta o código.
+  // Ele só é validado quando o instalador toca em "Salvar senha e entrar".
+  return { link: `${URL_INSTALADOR}#acesso=${data.properties.hashed_token}`, user_id: data.user.id };
 }
 async function emailAcessoInstalador(email: string, nome: string, link: string, empresa: string, novo: boolean) {
   if (!(env("RESEND_API_KEY") && env("EMAIL_REMETENTE"))) return false;

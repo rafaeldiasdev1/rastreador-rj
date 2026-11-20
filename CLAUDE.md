@@ -7,7 +7,8 @@ O Rafael quer gerenciar o negócio inteiro pelo **painel admin** (`app.rjdomotic
 - **Toda alteração ou configuração do app deve ter tela no painel.** Cadastros (clientes, veículos, instaladores), ajustes de cobrança, mensagens, integrações e situação dos modelos do WhatsApp: tudo deve poder ser visto e mudado ali.
 - **Não deixe tarefas que exijam o dashboard do Supabase, SQL, a Meta ou o terminal**, quando der para levar ao painel. Se algo novo precisar de configuração, crie junto a tela ou o campo no painel.
 - **O que precisa de chave secreta** (criar logins, gerar links, falar com Traccar, Mercado Pago, Resend e WhatsApp) vai como ação na função `api` (`supabase/functions/api/index.ts`, rota `/admin`). Ela confere se quem chama é administrador. O painel só chama a ação.
-- **Exceções** (só quando não há outro jeito): segredos da função (tokens e senhas, que o próprio Rafael configura e nunca passam pelo chat), a aprovação de modelos na Meta e a configuração de login do Supabase Auth. Nesses casos, explique o passo e, se possível, mostre o estado no painel (como em Configurações → Integrações).
+- **Exceção combinada: o conteúdo do curso de instalação** (aulas, narrações, vídeos, apostila, bucket `curso`) fica com o Claude, que cria e publica. Não precisa de tela no painel.
+- **Outras exceções** (só quando não há outro jeito): segredos da função (tokens e senhas, que o próprio Rafael configura e nunca passam pelo chat), a aprovação de modelos na Meta e a configuração de login do Supabase Auth. Nesses casos, explique o passo e, se possível, mostre o estado no painel (como em Configurações → Integrações).
 
 ## Como publicar
 

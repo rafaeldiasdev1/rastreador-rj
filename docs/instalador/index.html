@@ -381,7 +381,8 @@
   });
 
   // ── Criar senha: o link do convite/recuperação chega com #...type=recovery ──
-  var criandoSenha = /type=(recovery|invite)/.test(location.hash) || /error_code=/.test(location.hash);
+  var codigoAcesso = (location.hash.match(/acesso=([^&]+)/) || [])[1] || "";
+  var criandoSenha = !!codigoAcesso || /type=(recovery|invite)/.test(location.hash) || /error_code=/.test(location.hash);
   function telaSenha() {
     mostrar("v-senha");
     if (/error_code=/.test(location.hash)) msg("senha-msg", "Este link expirou ou já foi usado. Peça um novo link à RJ Domótica ou use \"Esqueci a senha\" na tela de entrada.");
@@ -391,7 +392,15 @@
     var a = $("nova1").value, b = $("nova2").value;
     if (a.length < 8) return msg("senha-msg", "A senha precisa ter pelo menos 8 caracteres.");
     if (a !== b) return msg("senha-msg", "As duas senhas não são iguais.");
+    var btn = ev.submitter || $("f-senha").querySelector("button"); btn.disabled = true;
+    if (codigoAcesso) {
+      // valida o código do link só agora, no toque do instalador
+      var v = await sb.auth.verifyOtp({ token_hash: codigoAcesso, type: "recovery" });
+      if (v.error) { btn.disabled = false; return msg("senha-msg", "Este link expirou ou já foi usado. Peça um novo link à RJ Domótica ou use \"Esqueci a senha\" na tela de entrada."); }
+      codigoAcesso = "";
+    }
     var s = (await sb.auth.getSession()).data.session;
+    btn.disabled = false;
     if (!s) return msg("senha-msg", "Este link expirou ou já foi usado. Peça um novo link à RJ Domótica ou use \"Esqueci a senha\" na tela de entrada.");
     var r = await sb.auth.updateUser({ password: a });
     if (r.error) return msg("senha-msg", erroTexto(r.error));
