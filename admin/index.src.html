@@ -965,7 +965,7 @@ async function telaConfig() {
   $('#b-teste').onclick = (e) => {
     const fone = so($('#t-fone').value);
     if (fone.length < 10) return toast('Informe o WhatsApp com DDD.', true);
-    rodar(e.currentTarget, async () => { const r = await api('whatsapp_teste', { tipo: $('#t-tipo').value, telefone: fone, nome: sessao.user.email.split('@')[0] }); toast('Teste enviado (' + r.modelo + ').'); });
+    rodar(e.currentTarget, async () => { const r = await api('whatsapp_teste', { tipo: $('#t-tipo').value, telefone: fone, nome: 'Cliente Teste' }); toast('Teste enviado (' + r.modelo + ').'); });
   };
 
   $('#fcfg').onsubmit = (e) => {

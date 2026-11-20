@@ -159,23 +159,23 @@ function conteudo(tipo: string, cli: Obj, cob: Obj | null, empresa: string, extr
   const nome = primeiroNome(cli.nome);
   const of = extra.oferta || OFERTA_PADRAO;
   const link = cob ? (cob.pix_url || cob.boleto_url || "") : "";
-  const valor = cob ? brl(cob.valor) : "", venc = cob ? dataBR(cob.vencimento) : "", mes = cob ? mesBR(cob.competencia) : "";
+  const valor = cob ? brl(cob.valor) : "", vnum = valor.replace(/^R\$\s*/, ""), venc = cob ? dataBR(cob.vencimento) : "", mes = cob ? mesBR(cob.competencia) : "";
   const T: Obj = {
     cobranca: { assunto: `${empresa} · Mensalidade de ${mes}`, titulo: `Sua mensalidade de ${mes} chegou`,
       texto: `Olá, ${nome}! A mensalidade do seu rastreamento está disponível: ${valor}, com vencimento em ${venc}. Você pode pagar por Pix ou boleto.`,
-      params: [nome, mes, valor, venc, link] },
+      params: [nome, mes, vnum, venc, link] },
     lembrete: { assunto: `${empresa} · Lembrete: mensalidade vence ${extra.dias === 0 ? "hoje" : "em " + venc}`, titulo: extra.dias === 0 ? "Sua mensalidade vence hoje" : `Sua mensalidade vence em ${extra.dias} dia(s)`,
       texto: `Olá, ${nome}! Passando para lembrar da mensalidade de ${valor} com vencimento em ${venc}. Se já pagou, desconsidere esta mensagem.`,
-      params: [nome, valor, venc, link] },
+      params: [nome, vnum, venc, link] },
     vencida: { assunto: `${empresa} · Mensalidade em atraso`, titulo: "Identificamos um atraso",
       texto: `Olá, ${nome}! Não identificamos o pagamento da mensalidade de ${valor}, vencida em ${venc}. Para evitar a suspensão do acesso ao app, regularize até ${dataBR(extra.limite)}. O Pix é confirmado na hora.`,
-      params: [nome, valor, venc, dataBR(extra.limite), link] },
+      params: [nome, vnum, venc, dataBR(extra.limite), link] },
     bloqueio: { assunto: `${empresa} · Acesso ao app suspenso`, titulo: "Seu acesso foi suspenso",
       texto: `Olá, ${nome}. Como a mensalidade vencida em ${venc} continua em aberto, o acesso ao app foi suspenso. Assim que o pagamento for confirmado, o acesso volta automaticamente. Pelo Pix, a liberação é imediata.`,
       params: [nome, link] },
     pagamento: { assunto: `${empresa} · Pagamento confirmado`, titulo: "Pagamento confirmado. Obrigado!",
       texto: `Olá, ${nome}! Recebemos o pagamento de ${valor} referente a ${mes}.${extra.desbloqueado ? " Seu acesso ao app já foi liberado." : ""}`,
-      params: [nome, mes, valor] },
+      params: [nome, mes, vnum] },
     pre_cadastro: { assunto: `${empresa} · Recebemos seu pré-cadastro`, titulo: "Obrigado pelo seu pré-cadastro!",
       texto: `Olá, ${nome}! Recebemos o seu pré-cadastro no rastreamento ${empresa}. Obrigado pela confiança!<br><br>Assim que iniciarmos o processo de instalação dos rastreadores, entraremos em contato pelo WhatsApp ou por este e-mail para agendar a instalação no seu veículo.<br><br>Sua condição especial já está garantida: <b style="color:#e8eaed">${brl(of.preco_promo)}/mês por ${of.meses_promo} meses</b> e instalação por ${brl(of.instalacao_promo)} (em vez de ${brl(of.instalacao_cheia)}), paga só no dia da instalação. Não é preciso fazer nada agora.`,
       params: [nome] },
