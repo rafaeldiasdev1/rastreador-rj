@@ -73,6 +73,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(56,214,245,.5);ou
 .sec{grid-column:span 12;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;color:var(--ci);margin-top:8px;padding-top:12px;border-top:1px solid var(--ln)}
 .chk{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--tx);font-weight:500}
 .chk input{width:20px;height:20px;accent-color:var(--ci)}
+.ag-item{display:flex;gap:12px;align-items:center;padding:10px 6px;border-top:1px solid var(--ln);cursor:pointer;border-radius:8px}.ag-item:hover{background:#181c22}
+.ag-hora{min-width:52px;text-align:center;font-weight:700;color:var(--ci);font-size:14px;line-height:1.2}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-cab{text-align:center;font-size:11px;color:var(--mu);padding:4px 0;text-transform:uppercase;letter-spacing:1px}
+.cal-dia{min-height:78px;background:#0f1216;border:1px solid var(--ln);border-radius:8px;padding:4px 5px;text-align:left;display:flex;flex-direction:column;gap:2px;color:var(--tx);cursor:pointer;overflow:hidden}
+.cal-dia span{font-size:12px;font-weight:700;color:var(--mu)}
+.cal-dia i{font-style:normal;font-size:11px;background:rgba(56,214,245,.14);color:var(--ci);border-radius:4px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-dia i.ok{background:rgba(61,220,132,.14);color:#7fe3a8}
+.cal-dia.hoje{border-color:var(--ci)}.cal-dia.hoje span{color:var(--ci)}
+.cal-dia.sel{background:#16202a;border-color:#3a6f80}
+@media(max-width:700px){.cal-dia{min-height:54px}.cal-dia i{font-size:9px;padding:0 2px}}
 .abas{display:flex;gap:6px;border-bottom:1px solid var(--ln);margin-bottom:16px;flex-wrap:wrap}
 .abas button{background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;color:var(--mu);font-weight:600}
 .abas button.ativo{color:var(--ci);border-color:var(--ci)}
@@ -123,6 +134,7 @@ code{background:var(--sf2);border:1px solid var(--ln);border-radius:8px;padding:
     <a href="#inicio" data-r="inicio"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Visão geral</a>
     <a href="#clientes" data-r="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6"/></svg>Clientes</a>
     <a href="#cobrancas" data-r="cobrancas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Cobranças</a>
+    <a href="#os" data-r="os"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15h3"/></svg>Ordens de serviço</a>
     <a href="#instaladores" data-r="instaladores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Instaladores</a>
     <a href="#mensagens" data-r="mensagens"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensagens</a>
     <a href="#equipe" data-r="equipe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Equipe</a>
@@ -245,7 +257,7 @@ function rota() {
   const [r, id] = (location.hash.slice(1) || 'inicio').split('-c-');
   $$('aside a').forEach((a) => a.classList.toggle('ativo', a.dataset.r === (r === 'cliente' ? 'clientes' : r)));
   fecharModal();
-  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, instaladores: telaInstaladores, equipe: telaEquipe, mensagens: telaMensagens, config: telaConfig };
+  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, os: telaOS, instaladores: telaInstaladores, equipe: telaEquipe, mensagens: telaMensagens, config: telaConfig };
   (telas[r] || telaInicio)();
   window.scrollTo(0, 0);
 }
@@ -409,14 +421,15 @@ function mostrarAcesso(login, senha) {
 async function telaCliente(id) {
   const m = $('#main');
   m.innerHTML = '<div class="vazio">Carregando…</div>';
-  let c, veics, cobs, msgs, hist;
+  let c, veics, cobs, msgs, hist, oss;
   try {
-    [c, veics, cobs, msgs, hist] = await Promise.all([
+    [c, veics, cobs, msgs, hist, oss] = await Promise.all([
       sb.from('v_clientes').select('*').eq('id', id).single().then(chk),
       sb.from('veiculos').select('*').eq('cliente_id', id).order('created_at').then(chk),
       sb.from('cobrancas').select('*').eq('cliente_id', id).order('vencimento', { ascending: false }).then(chk),
       sb.from('mensagens').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(100).then(chk),
       sb.from('historico').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(100).then(chk),
+      sb.from('ordens_servico').select(SEL_OS).eq('cliente_id', id).order('agendada_para', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false }).then(chk),
     ]);
   } catch (e) { m.innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; return; }
   m.innerHTML = `<div class="cab"><div><a href="#clientes" class="pq" style="text-decoration:none">← Clientes</a><h1 style="margin-top:6px">${esc(c.nome)}</h1><div style="margin-top:8px">${situacao(c)} ${c.traccar_user_id ? '<span class="badge b-ci">Login no app criado</span>' : '<span class="badge b-mu">Login no app pendente</span>'} ${c.escuta_liberada ? '<span class="badge b-ci">Escuta contratada</span>' : ''}</div></div>
@@ -429,7 +442,7 @@ async function telaCliente(id) {
     <div><small>Mensalidade</small>${brl(c.valor_mensal)} · vence todo dia ${c.dia_vencimento}</div><div><small>Login do app</small>${esc(c.login_app || c.email)}</div><div><small>Cliente desde</small>${dataBR(c.created_at)}</div>
     ${c.observacoes ? `<div style="grid-column:1/-1"><small>Observações</small>${esc(c.observacoes)}</div>` : ''}
   </div></div>
-  <div class="abas" role="tablist"><button class="ativo" data-a="veiculos">Veículos (${veics.length})</button><button data-a="cobrancas">Cobranças (${cobs.length})</button><button data-a="mensagens">Mensagens</button><button data-a="historico">Histórico</button></div>
+  <div class="abas" role="tablist"><button class="ativo" data-a="veiculos">Veículos (${veics.length})</button><button data-a="os">OS e visitas (${oss.length})</button><button data-a="cobrancas">Cobranças (${cobs.length})</button><button data-a="mensagens">Mensagens</button><button data-a="historico">Histórico</button></div>
   <div id="aba"></div>
   <div style="margin-top:28px;text-align:right"><button class="btn2 btn-vm mini" id="b-excluir">Excluir cliente</button></div>`;
   $('#b-edit').onclick = async () => formCliente(chk(await sb.from('clientes').select('*').eq('id', id).single()));
@@ -441,12 +454,14 @@ async function telaCliente(id) {
   const abas = {
     veiculos: () => `<div class="painel" style="padding:4px 8px">${veics.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Veículo</th><th>Placa</th><th>Rastreador</th><th>Chip</th><th>Escuta</th><th>Situação</th><th></th></tr></thead><tbody>${veics.map((v) => `<tr><td><b>${esc(v.marca)} ${esc(v.modelo)}</b><div class="mu pq">${esc([TIPOS_VEIC[v.tipo] || 'Carro', v.ano, v.cor].filter(Boolean).join(' · '))}</div></td><td><code>${esc(v.placa || '—')}</code></td><td>${esc(v.modelo_rastreador || '')}<div class="mu pq">IMEI ${esc(v.imei || '—')}</div></td><td>${esc(v.chip_numero ? fmtFone(v.chip_numero) : '—')}<div class="mu pq">${esc([v.chip_operadora, v.chip_iccid ? 'ICCID ' + v.chip_iccid : ''].filter(Boolean).join(' · '))}</div></td><td>${v.escuta && c.escuta_liberada ? '<span class="badge b-ci">Liberada</span>' : '<span class="badge b-mu">Não</span>'}</td><td>${v.ativo ? (v.traccar_device_id ? '<span class="badge b-ok">No rastreador</span>' : '<span class="badge b-la">Pendente</span>') : '<span class="badge b-mu">Inativo</span>'}</td><td><button class="btn2 mini" data-v="${v.id}">Editar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhum veículo cadastrado.</div>'}</div><button class="btn" id="b-novo-v">+ Adicionar veículo</button>`,
     cobrancas: () => `<div class="painel" style="padding:4px 8px">${cobs.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Referência</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th>Pagamento</th><th></th></tr></thead><tbody>${cobs.map((x) => linhaCobranca(x)).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma cobrança ainda. Elas são geradas automaticamente perto do vencimento.</div>'}</div><button class="btn" id="b-gerar-c">Gerar cobrança agora</button>`,
+    os: () => `<div class="painel" style="padding:4px 8px">${oss.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Nº</th><th>Tipo</th><th>Visita</th><th>Endereço</th><th>Veículo</th><th>Técnico</th><th>Situação</th></tr></thead><tbody>${oss.map((o) => `<tr class="click" data-os="${o.id}"><td><b>${o.numero}</b></td><td>${esc(TIPOS_OS[o.tipo] || o.tipo)}${o.descricao_servico ? `<div class="mu pq" style="max-width:220px">${esc(o.descricao_servico)}</div>` : ''}</td><td style="white-space:nowrap">${quandoOS(o)}</td><td class="pq">${esc(o.endereco_visita || '—')}</td><td>${o.veiculos ? esc(o.veiculos.placa || o.veiculos.modelo) : '—'}</td><td>${esc(o.instaladores?.nome || '—')}</td><td>${badgeOS(o)}${o.concluida_em ? `<div class="mu pq">${dataBR(o.concluida_em)}</div>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma ordem de serviço para este cliente.</div>'}</div><button class="btn" id="b-nova-os-c">+ Nova OS para este cliente</button>`,
     mensagens: () => `<div class="painel" style="padding:4px 8px">${msgs.length ? `<div class="rolagem"><table class="tab"><thead><tr><th>Quando</th><th>Canal</th><th>Tipo</th><th>Status</th><th>Detalhe</th></tr></thead><tbody>${msgs.map((x) => linhaMsg(x)).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma mensagem enviada.</div>'}</div>`,
     historico: () => `<div class="painel" style="padding:4px 8px">${hist.length ? `<div class="rolagem"><table class="tab"><tbody>${hist.map((x) => `<tr><td class="mu pq" style="white-space:nowrap">${dataHora(x.created_at)}</td><td>${esc(x.detalhe)}</td><td class="mu pq">${esc(x.autor || '')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Sem histórico.</div>'}</div>`,
   };
   const abrirAba = (k) => {
     $$('.abas button').forEach((b) => b.classList.toggle('ativo', b.dataset.a === k));
     $('#aba').innerHTML = abas[k]();
+    if (k === 'os') { $('#b-nova-os-c').onclick = () => formOS(null, { cliente_id: id }); $$('#aba [data-os]').forEach((tr) => tr.onclick = () => formOS(oss.find((o) => o.id === tr.dataset.os))); }
     if (k === 'veiculos') { $('#b-novo-v').onclick = () => formVeiculo(c); $$('[data-v]').forEach((b) => b.onclick = () => formVeiculo(c, veics.find((v) => v.id === b.dataset.v))); }
     if (k === 'cobrancas') { $('#b-gerar-c').onclick = (e) => rodar(e.currentTarget, async () => { const r = await api('gerar_cobranca', { cliente_id: id }); toast(r.cobranca?.erro_geracao ? 'Cobrança criada, mas: ' + r.cobranca.erro_geracao : 'Cobrança gerada e enviada.', !!r.cobranca?.erro_geracao); telaCliente(id).then(() => abrirAba('cobrancas')); }); ligarAcoesCobranca($('#aba'), () => telaCliente(id).then(() => abrirAba('cobrancas'))); }
   };
@@ -558,6 +573,188 @@ async function telaMensagens() {
     const l = chk(await sb.from('mensagens').select('*, clientes(nome)').order('created_at', { ascending: false }).limit(300));
     $('#lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Quando</th><th>Cliente</th><th>Canal</th><th>Tipo</th><th>Status</th><th>Detalhe</th></tr></thead><tbody>${l.map((x) => linhaMsg(x, true)).join('')}</tbody></table>` : '<div class="vazio">Nenhuma mensagem enviada ainda.</div>';
   } catch (e) { $('#lista').innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; }
+}
+
+/* ---------- ordens de serviço e agenda de visitas ---------- */
+const TIPOS_OS = { instalacao: 'Instalação', manutencao: 'Manutenção / reparo', retirada: 'Retirada' };
+const STATUS_OS = { aberta: ['Agendada / aberta', 'b-ci'], em_execucao: ['Em execução', 'b-la'], concluida: ['Concluída', 'b-ok'], reprovada: ['Reprovada', 'b-vm'], cancelada: ['Cancelada', 'b-mu'] };
+const PAG_OS = { pendente: 'Pagamento pendente', liberado: 'Pagamento liberado', bloqueado: 'Pagamento bloqueado', pago: 'Pago ao técnico' };
+const TZ = 'America/Sao_Paulo';
+const diaDe = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(d));
+const horaDe = (d) => new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(new Date(d));
+const quandoOS = (o) => o.agendada_para ? dataBR(diaDe(o.agendada_para)) + ' · ' + horaDe(o.agendada_para) : '<span class="mu">Sem data</span>';
+const badgeOS = (o) => { const s = STATUS_OS[o.status] || [o.status, 'b-mu']; return `<span class="badge ${s[1]}">${esc(s[0])}</span>`; };
+const enderecoCliente = (c) => c ? [[c.logradouro, c.numero].filter(Boolean).join(', '), c.complemento, c.bairro, [c.cidade, c.uf].filter(Boolean).join('/')].filter(Boolean).join(' · ') : '';
+const SEL_OS = '*, clientes(id, nome, whatsapp, logradouro, numero, complemento, bairro, cidade, uf), veiculos(marca, modelo, placa), instaladores(nome)';
+let OS_FILTRO = { mes: hoje().slice(0, 7), tipo: '', status: '', q: '' }, OS_CAL = hoje().slice(0, 7), OS_DIA = hoje();
+
+async function telaOS() {
+  const m = $('#main');
+  m.innerHTML = `<div class="cab"><h1>Ordens de serviço</h1><button class="btn" id="b-nova-os">+ Nova OS</button></div><div class="vazio">Carregando…</div>`;
+  let lista;
+  try { lista = chk(await sb.from('ordens_servico').select(SEL_OS).order('agendada_para', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false })); }
+  catch (e) { m.querySelector('.vazio').textContent = e.message; return; }
+  if (!$('#b-nova-os')) return;
+  const ativas = lista.filter((o) => o.agendada_para && !['cancelada', 'concluida'].includes(o.status));
+  const hj = hoje();
+  const deHoje = ativas.filter((o) => diaDe(o.agendada_para) === hj).sort((a, b) => a.agendada_para.localeCompare(b.agendada_para));
+  const futuras = ativas.filter((o) => diaDe(o.agendada_para) > hj).sort((a, b) => a.agendada_para.localeCompare(b.agendada_para)).slice(0, 15);
+  const semData = lista.filter((o) => !o.agendada_para && !['cancelada', 'concluida'].includes(o.status));
+  const itemAgenda = (o, comDia) => `<div class="ag-item" data-os="${o.id}"><div class="ag-hora">${comDia ? dataBR(diaDe(o.agendada_para)).slice(0, 5) + '<br>' : ''}${horaDe(o.agendada_para)}</div><div style="flex:1;min-width:0"><b>${esc(o.clientes?.nome || '')}</b> <span class="mu pq">OS ${o.numero} · ${esc(TIPOS_OS[o.tipo] || o.tipo)}</span><div class="mu pq" style="overflow:hidden;text-overflow:ellipsis">${esc(o.endereco_visita || enderecoCliente(o.clientes) || 'Endereço não informado')}${o.instaladores ? ' · ' + esc(o.instaladores.nome) : ' · <span style="color:var(--la)">sem técnico</span>'}</div></div></div>`;
+  m.innerHTML = `<div class="cab"><h1>Ordens de serviço</h1><button class="btn" id="b-nova-os">+ Nova OS</button></div>
+  <div class="grid2">
+    <div class="painel"><h2>Visitas de hoje <span class="mu pq">${dataBR(hj)}</span></h2>${deHoje.length ? deHoje.map((o) => itemAgenda(o)).join('') : '<div class="mu pq" style="padding:8px 0">Nenhuma visita marcada para hoje.</div>'}
+      ${semData.length ? `<div class="sec">SEM DATA MARCADA (${semData.length})</div>${semData.slice(0, 6).map((o) => `<div class="ag-item" data-os="${o.id}"><div class="ag-hora">—</div><div style="flex:1"><b>${esc(o.clientes?.nome || '')}</b> <span class="mu pq">OS ${o.numero} · ${esc(TIPOS_OS[o.tipo] || o.tipo)}</span><div class="pq" style="color:var(--la)">Toque para agendar</div></div></div>`).join('')}` : ''}</div>
+    <div class="painel"><h2>Próximas visitas</h2>${futuras.length ? futuras.map((o) => itemAgenda(o, true)).join('') : '<div class="mu pq" style="padding:8px 0">Nenhuma visita futura agendada.</div>'}</div>
+  </div>
+  <div class="painel"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0;flex:1">Calendário de visitas</h2><button class="btn2 mini" id="cal-ant" aria-label="Mês anterior">‹</button><b id="cal-mes" style="min-width:150px;text-align:center"></b><button class="btn2 mini" id="cal-prox" aria-label="Próximo mês">›</button><button class="btn2 mini" id="cal-hoje">Hoje</button></div>
+    <div class="cal" id="cal"></div><div id="cal-dia" style="margin-top:12px"></div></div>
+  <div class="painel"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0;flex:1">Todas as ordens</h2><button class="btn2 mini" id="b-exportar">Exportar planilha</button></div>
+    <div class="busca" style="margin-top:10px"><select id="f-per" aria-label="Período"><option value="mes">Mês</option><option value="tudo">Todo o período</option></select><input type="month" id="f-mes" aria-label="Mês" value="${OS_FILTRO.mes}">
+      <select id="f-tipo" aria-label="Tipo"><option value="">Todos os tipos</option>${Object.entries(TIPOS_OS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <select id="f-st" aria-label="Situação"><option value="">Todas as situações</option>${Object.entries(STATUS_OS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select>
+      <input id="f-q" placeholder="Buscar cliente, placa, técnico ou nº" style="flex:1 1 200px" aria-label="Buscar"></div>
+    <div class="rolagem" id="os-lista"></div></div>`;
+  $('#b-nova-os').onclick = () => formOS();
+  $$('.ag-item').forEach((el) => el.onclick = () => formOS(lista.find((o) => o.id === el.dataset.os)));
+  // calendário
+  const desenharCal = () => {
+    const [a, mm] = OS_CAL.split('-').map(Number), primeiro = new Date(Date.UTC(a, mm - 1, 1)), dias = new Date(Date.UTC(a, mm, 0)).getUTCDate();
+    $('#cal-mes').textContent = primeiro.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const porDia = {};
+    lista.filter((o) => o.agendada_para && o.status !== 'cancelada').forEach((o) => { const d = diaDe(o.agendada_para); (porDia[d] = porDia[d] || []).push(o); });
+    let h = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => `<div class="cal-cab">${d}</div>`).join('');
+    for (let i = 0; i < primeiro.getUTCDay(); i++) h += '<div></div>';
+    for (let d = 1; d <= dias; d++) {
+      const k = OS_CAL + '-' + String(d).padStart(2, '0'), it = (porDia[k] || []).sort((x, y) => x.agendada_para.localeCompare(y.agendada_para));
+      h += `<button class="cal-dia${k === hj ? ' hoje' : ''}${k === OS_DIA ? ' sel' : ''}" data-dia="${k}"><span>${d}</span>${it.slice(0, 3).map((o) => `<i class="${o.status === 'concluida' ? 'ok' : ''}">${horaDe(o.agendada_para)} ${esc((o.clientes?.nome || '').split(' ')[0])}</i>`).join('')}${it.length > 3 ? `<i>+${it.length - 3}</i>` : ''}</button>`;
+    }
+    $('#cal').innerHTML = h;
+    $$('.cal-dia').forEach((b) => b.onclick = () => { OS_DIA = b.dataset.dia; desenharCal(); });
+    const doDia = (porDia[OS_DIA] || []).sort((x, y) => x.agendada_para.localeCompare(y.agendada_para));
+    $('#cal-dia').innerHTML = `<div class="sec" style="margin-top:0">VISITAS DE ${dataBR(OS_DIA)}</div>${doDia.length ? doDia.map((o) => itemAgenda(o)).join('') : '<div class="mu pq">Nenhuma visita neste dia.</div>'}<button class="btn2 mini" id="b-os-dia" style="margin-top:8px">+ Agendar neste dia</button>`;
+    $$('#cal-dia .ag-item').forEach((el) => el.onclick = () => formOS(lista.find((o) => o.id === el.dataset.os)));
+    $('#b-os-dia').onclick = () => formOS(null, { dia: OS_DIA });
+  };
+  const mudaMes = (n) => { const [a, mm] = OS_CAL.split('-').map(Number), d = new Date(Date.UTC(a, mm - 1 + n, 1)); OS_CAL = d.toISOString().slice(0, 7); desenharCal(); };
+  $('#cal-ant').onclick = () => mudaMes(-1); $('#cal-prox').onclick = () => mudaMes(1);
+  $('#cal-hoje').onclick = () => { OS_CAL = hj.slice(0, 7); OS_DIA = hj; desenharCal(); };
+  desenharCal();
+  // lista com filtros
+  $('#f-per').value = OS_FILTRO.mes ? 'mes' : 'tudo'; $('#f-tipo').value = OS_FILTRO.tipo; $('#f-st').value = OS_FILTRO.status; $('#f-q').value = OS_FILTRO.q;
+  const filtradas = () => {
+    const q = OS_FILTRO.q.trim().toLowerCase();
+    return lista.filter((o) => {
+      if (OS_FILTRO.mes && diaDe(o.agendada_para || o.created_at).slice(0, 7) !== OS_FILTRO.mes) return false;
+      if (OS_FILTRO.tipo && o.tipo !== OS_FILTRO.tipo) return false;
+      if (OS_FILTRO.status && o.status !== OS_FILTRO.status) return false;
+      if (q && ![String(o.numero), o.clientes?.nome, o.veiculos?.placa, o.instaladores?.nome].filter(Boolean).join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  };
+  const desenharLista = () => {
+    $('#f-mes').disabled = !OS_FILTRO.mes;
+    const l = filtradas();
+    $('#os-lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Nº</th><th>Tipo</th><th>Cliente</th><th>Veículo</th><th>Visita</th><th>Técnico</th><th>Situação</th></tr></thead><tbody>${l.map((o) => `<tr class="click" data-os="${o.id}"><td><b>${o.numero}</b></td><td>${esc(TIPOS_OS[o.tipo] || o.tipo)}</td><td>${esc(o.clientes?.nome || '')}<div class="mu pq">${esc(o.endereco_visita || enderecoCliente(o.clientes))}</div></td><td>${o.veiculos ? esc(o.veiculos.marca + ' ' + o.veiculos.modelo) + '<div class="mu pq">' + esc(o.veiculos.placa || '') + '</div>' : '—'}</td><td style="white-space:nowrap">${quandoOS(o)}</td><td>${esc(o.instaladores?.nome || '—')}</td><td>${badgeOS(o)}<div class="mu pq">${esc(PAG_OS[o.pagamento_status] || '')}</div></td></tr>`).join('')}</tbody></table><div class="mu pq" style="padding:8px 4px">${l.length} ordem(ns)</div>` : '<div class="vazio">Nenhuma ordem de serviço neste filtro.</div>';
+    $$('#os-lista [data-os]').forEach((tr) => tr.onclick = () => formOS(lista.find((o) => o.id === tr.dataset.os)));
+  };
+  $('#f-per').onchange = () => { OS_FILTRO.mes = $('#f-per').value === 'mes' ? ($('#f-mes').value || hoje().slice(0, 7)) : ''; desenharLista(); };
+  $('#f-mes').onchange = () => { if ($('#f-mes').value) { OS_FILTRO.mes = $('#f-mes').value; desenharLista(); } };
+  $('#f-tipo').onchange = () => { OS_FILTRO.tipo = $('#f-tipo').value; desenharLista(); };
+  $('#f-st').onchange = () => { OS_FILTRO.status = $('#f-st').value; desenharLista(); };
+  $('#f-q').oninput = () => { OS_FILTRO.q = $('#f-q').value; desenharLista(); };
+  $('#b-exportar').onclick = () => exportarOS(filtradas());
+  desenharLista();
+}
+
+function exportarOS(l) {
+  if (!l.length) return toast('Nada para exportar neste filtro.', true);
+  const num = (v) => v == null ? '' : String(Number(v).toFixed(2)).replace('.', ',');
+  const dt = (d) => d ? dataBR(diaDe(d)) : '', hr = (d) => d ? horaDe(d) : '';
+  const cab = ['Nº', 'Tipo', 'Situação', 'Pagamento do técnico', 'Cliente', 'WhatsApp do cliente', 'Veículo', 'Placa', 'Data da visita', 'Hora', 'Endereço da visita', 'Técnico', 'Valor do técnico (R$)', 'Criada em', 'Iniciada em', 'Concluída em', 'Responsável no local', 'Descrição do serviço', 'Observações finais'];
+  const linhas = l.map((o) => [o.numero, TIPOS_OS[o.tipo] || o.tipo, (STATUS_OS[o.status] || [o.status])[0], PAG_OS[o.pagamento_status] || o.pagamento_status, o.clientes?.nome || '', o.clientes?.whatsapp ? fmtFone(o.clientes.whatsapp) : '',
+    o.veiculos ? o.veiculos.marca + ' ' + o.veiculos.modelo : '', o.veiculos?.placa || '', dt(o.agendada_para), hr(o.agendada_para), o.endereco_visita || enderecoCliente(o.clientes), o.instaladores?.nome || '', num(o.valor_instalador),
+    dt(o.created_at), dt(o.iniciada_em), dt(o.concluida_em), o.responsavel_nome || '', o.descricao_servico || '', o.observacoes_finais || '']);
+  const csv = '﻿' + [cab, ...linhas].map((r) => r.map((v) => { const s = String(v ?? ''); return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'ordens-de-servico-' + (OS_FILTRO.mes || 'todo-periodo') + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast(l.length + ' ordem(ns) exportada(s). Abre direto no Excel ou no Google Planilhas.');
+}
+
+async function formOS(o, pre = {}) {
+  const nova = !o;
+  let clis, insts, veics = [];
+  try {
+    [clis, insts] = await Promise.all([
+      sb.from('clientes').select('id, nome, status, logradouro, numero, complemento, bairro, cidade, uf').order('nome').then(chk),
+      sb.from('instaladores').select('user_id, nome, valor_padrao, ativo').order('nome').then(chk),
+    ]);
+  } catch (e) { return toast(e.message, true); }
+  const cliId = o ? o.cliente_id : pre.cliente_id || '';
+  const dia = o?.agendada_para ? diaDe(o.agendada_para) : pre.dia || '';
+  const hora = o?.agendada_para ? horaDe(o.agendada_para) : '';
+  const m = modal(`<div class="cab"><h1 style="font-size:18px">${nova ? 'Nova ordem de serviço' : 'OS ' + o.numero}</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
+  ${nova ? '' : `<div style="margin:-6px 0 12px">${badgeOS(o)} <span class="mu pq">${esc(PAG_OS[o.pagamento_status] || '')}${o.concluida_em ? ' · concluída em ' + dataHora(o.concluida_em) : ''}</span></div>`}
+  <form class="form" id="fos" novalidate>
+    <label class="campo req c8"><span>Cliente</span><select name="cliente_id" required ${nova ? '' : 'disabled'}><option value="">Selecione o cliente</option>${clis.map((c) => `<option value="${c.id}" ${c.id === cliId ? 'selected' : ''}>${esc(c.nome)}${c.status === 'pre_cadastro' ? ' (pré-cadastro)' : ''}</option>`).join('')}</select></label>
+    <label class="campo req c4"><span>Tipo</span><select name="tipo">${Object.entries(TIPOS_OS).map(([k, v]) => `<option value="${k}" ${(o?.tipo || pre.tipo || 'instalacao') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    <label class="campo c6"><span>Veículo</span><select name="veiculo_id" ${nova ? '' : 'disabled'}><option value="">—</option></select></label>
+    <label class="campo c3"><span>Dia da visita</span><input name="dia" type="date" value="${esc(dia)}"></label>
+    <label class="campo c3"><span>Horário</span><input name="hora" type="time" value="${esc(hora)}"></label>
+    <label class="campo c12"><span>Endereço da visita técnica</span><input name="endereco_visita" value="${esc(o?.endereco_visita || '')}" placeholder="Rua, número, bairro, cidade (preenchido com o endereço do cliente)"></label>
+    <label class="campo c8"><span>Técnico</span><select name="instalador_id"><option value="">Sem técnico (fica com quem abrir primeiro)</option>${insts.filter((i) => i.ativo || i.user_id === o?.instalador_id).map((i) => `<option value="${i.user_id}" data-valor="${i.valor_padrao ?? ''}" ${i.user_id === o?.instalador_id ? 'selected' : ''}>${esc(i.nome)}</option>`).join('')}</select></label>
+    <label class="campo c4"><span>Valor do técnico (R$)</span><input name="valor_instalador" inputmode="decimal" value="${o?.valor_instalador != null ? esc(Number(o.valor_instalador).toFixed(2).replace('.', ',')) : ''}"></label>
+    <label class="campo c12"><span>Serviço / observações para o técnico</span><textarea name="descricao_servico" rows="3" placeholder="Ex.: rastreador sem sinal, verificar alimentação">${esc(o?.descricao_servico || '')}</textarea></label>
+    <div class="c12" id="fos-erro" style="color:#ff8a80"></div>
+    <div class="c12 acoes" style="justify-content:space-between;flex-wrap:wrap">
+      <div>${nova ? '' : `<a class="btn2" href="os.html?cliente=${o.cliente_id}">Fotos, assinatura e pagamento</a> ${['concluida', 'cancelada'].includes(o.status) ? '' : '<button type="button" class="btn2 btn-vm" id="b-cancelar-os">Cancelar OS</button>'}`}</div>
+      <div style="display:flex;gap:8px"><button type="button" class="btn2" data-x>Fechar</button><button class="btn" type="submit">${nova ? 'Criar OS' : 'Salvar'}</button></div>
+    </div>
+  </form>`);
+  $$('[data-x]', m).forEach((b) => b.onclick = fecharModal);
+  const f = $('#fos', m), selCli = f.cliente_id, selVei = f.veiculo_id, inEnd = f.endereco_visita;
+  const carregarVeiculos = async () => {
+    const cid = selCli.value;
+    selVei.innerHTML = '<option value="">—</option>';
+    if (!cid) return;
+    veics = chk(await sb.from('veiculos').select('id, marca, modelo, placa').eq('cliente_id', cid).order('created_at'));
+    selVei.innerHTML = '<option value="">Sem veículo específico</option>' + veics.map((v) => `<option value="${v.id}" ${v.id === o?.veiculo_id ? 'selected' : ''}>${esc(v.marca + ' ' + v.modelo)}${v.placa ? ' · ' + esc(v.placa) : ''}</option>`).join('');
+    if (nova && veics.length === 1) selVei.value = veics[0].id;
+    if (nova && !inEnd.value) inEnd.value = enderecoCliente(clis.find((c) => c.id === cid));
+  };
+  selCli.onchange = () => { inEnd.value = ''; carregarVeiculos().catch((e) => toast(e.message, true)); };
+  f.instalador_id.onchange = () => { const v = f.instalador_id.selectedOptions[0]?.dataset.valor; if (v && !f.valor_instalador.value) f.valor_instalador.value = Number(v).toFixed(2).replace('.', ','); };
+  carregarVeiculos().catch((e) => toast(e.message, true));
+  if ($('#b-cancelar-os', m)) $('#b-cancelar-os', m).onclick = async () => {
+    fecharModal();
+    if (await confirmar('Cancelar a OS ' + o.numero + '?', 'A visita sai da agenda e o técnico deixa de ver esta OS. O registro continua no histórico.', 'Cancelar OS', true))
+      rodar(null, async () => { chk(await sb.from('ordens_servico').update({ status: 'cancelada' }).eq('id', o.id)); chk(await sb.from('historico').insert({ cliente_id: o.cliente_id, tipo: 'instalacao', detalhe: 'OS ' + o.numero + ' cancelada', autor: sessao.user.email })); toast('OS cancelada.'); rota(); });
+  };
+  f.onsubmit = (e) => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(f).entries()), err = $('#fos-erro', m);
+    err.textContent = '';
+    const cid = nova ? v.cliente_id : o.cliente_id;
+    if (!cid) return err.textContent = 'Selecione o cliente.';
+    if (v.hora && !v.dia) return err.textContent = 'Informe o dia da visita.';
+    if (v.dia && !v.hora) return err.textContent = 'Informe o horário da visita.';
+    const valor = v.valor_instalador ? Number(String(v.valor_instalador).replace(/\./g, '').replace(',', '.')) : null;
+    if (valor !== null && !(valor >= 0)) return err.textContent = 'Valor do técnico inválido.';
+    const agendada = v.dia ? new Date(v.dia + 'T' + v.hora + ':00-03:00').toISOString() : null;
+    const dados = { tipo: v.tipo, agendada_para: agendada, endereco_visita: (v.endereco_visita || '').trim() || null, instalador_id: v.instalador_id || null, valor_instalador: valor, descricao_servico: (v.descricao_servico || '').trim() || null };
+    rodar(f.querySelector('[type=submit]'), async () => {
+      let num;
+      if (nova) {
+        const r = chk(await sb.from('ordens_servico').insert({ ...dados, cliente_id: cid, veiculo_id: v.veiculo_id || null }).select('numero').single());
+        num = r.numero;
+      } else { chk(await sb.from('ordens_servico').update(dados).eq('id', o.id)); num = o.numero; }
+      const quando = agendada ? ' para ' + dataBR(v.dia) + ' às ' + v.hora : '';
+      await sb.from('historico').insert({ cliente_id: cid, tipo: 'instalacao', detalhe: `OS ${num} (${TIPOS_OS[v.tipo]}) ${nova ? 'criada' : 'atualizada'}${quando}`, autor: sessao.user.email });
+      fecharModal(); toast(nova ? 'OS ' + num + ' criada.' : 'OS ' + num + ' salva.'); rota();
+    });
+  };
 }
 
 /* ---------- instaladores ---------- */

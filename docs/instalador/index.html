@@ -176,6 +176,7 @@
     window.scrollTo(0, 0);
   }
   function msg(el, texto, tipo) { $(el).innerHTML = texto ? '<div class="msg ' + (tipo || "er") + '"></div>' : ""; if (texto) $(el).firstChild.textContent = texto; }
+  function quando(d) { return new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
   function erroTexto(e) { return (e && (e.message || e.error_description)) || String(e); }
   var ROTULO = { aberta: "Aberta", em_execucao: "Em execução", concluida: "Concluída", reprovada: "Reprovada", cancelada: "Cancelada",
                  pendente: "Pagamento pendente", liberado: "Pagamento liberado", pago: "Pago", bloqueado: "Pagamento bloqueado" };
@@ -249,7 +250,7 @@
       var li = document.createElement("li");
       li.innerHTML = '<b></b><span class="grow mu" style="flex:1"></span><span class="tag"></span>';
       li.children[0].textContent = "OS " + o.numero;
-      li.children[1].textContent = (o.placa || "") + " · " + o.cliente;
+      li.children[1].textContent = (o.agendada_para ? quando(o.agendada_para) + " · " : "") + [o.placa, o.cliente].filter(Boolean).join(" · ");
       var t = o.status === "concluida" ? o.pagamento_status : o.status;
       li.children[2].textContent = ROTULO[t]; li.children[2].classList.add(t);
       li.addEventListener("click", function () { abrirOS(o.numero); });
@@ -276,7 +277,8 @@
     $("os-reprov").classList.toggle("oculto", os.status !== "reprovada");
     if (os.status === "reprovada") $("os-reprov").textContent = "Reprovada pela RJ Domótica: " + (os.motivo_reprovacao || "corrija as fotos e encerre de novo.");
     var v = os.veiculo || {}, info = $("os-info"); info.innerHTML = "";
-    [["Cliente", os.cliente], ["Local", [os.bairro, os.cidade].filter(Boolean).join(", ")], ["Veículo", [v.marca, v.modelo, v.ano].filter(Boolean).join(" ")],
+    [["Visita", os.agendada_para ? quando(os.agendada_para) : ""], ["Cliente", os.cliente],
+     ["Endereço", os.endereco_visita || [os.bairro, os.cidade].filter(Boolean).join(", ")], ["Serviço", os.descricao_servico], ["Veículo", [v.marca, v.modelo, v.ano].filter(Boolean).join(" ")],
      ["Cor", v.cor], ["Placa", v.placa], ["IMEI", v.imei]].forEach(function (p) {
       if (!p[1]) return; var dt = document.createElement("dt"), dd = document.createElement("dd");
       dt.textContent = p[0]; dd.textContent = p[1]; info.appendChild(dt); info.appendChild(dd);
