@@ -651,7 +651,7 @@ async function telaConfig() {
         <label class="campo c6"><span>Bloquear após quantos dias úteis de atraso</span><input name="dias_uteis_bloqueio" type="number" min="1" max="15" value="${esc(C.dias_uteis_bloqueio)}"></label>
         <p class="mu pq c12" style="margin:0;line-height:1.6">Exemplo com 2: venceu na sexta, a tolerância é segunda e terça, e o bloqueio acontece na quarta às 9h. A rotina roda todo dia às 9h05.</p>
         <div class="sec">MODELOS DO WHATSAPP (NOME APROVADO NA META)</div>
-        ${['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento'].map((k) => `<label class="campo c4"><span>${{ cobranca: 'Nova cobrança', lembrete: 'Lembrete', vencida: 'Atraso', bloqueio: 'Bloqueio', pagamento: 'Pagamento' }[k]}</span><input name="tpl_${k}" value="${esc(tpl[k] || '')}"></label>`).join('')}
+        ${['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento', 'pre_cadastro'].map((k) => `<label class="campo c4"><span>${{ cobranca: 'Nova cobrança', lembrete: 'Lembrete', vencida: 'Atraso', bloqueio: 'Bloqueio', pagamento: 'Pagamento', pre_cadastro: 'Pré-cadastro' }[k]}</span><input name="tpl_${k}" value="${esc(tpl[k] || '')}"></label>`).join('')}
         <div class="acoes c12" style="justify-content:flex-end"><button class="btn">Salvar regras</button></div>
       </form>
     </div>
@@ -670,7 +670,7 @@ async function telaConfig() {
       { chave: 'dias_antecedencia_cobranca', valor: Math.max(1, Number(v.dias_antecedencia_cobranca) || 10) },
       { chave: 'dias_lembrete', valor: [...new Set(lem)].sort((a, b) => b - a) },
       { chave: 'dias_uteis_bloqueio', valor: Math.max(1, Number(v.dias_uteis_bloqueio) || 2) },
-      { chave: 'whatsapp_templates', valor: Object.fromEntries(['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento'].map((k) => [k, (v['tpl_' + k] || '').trim()])) },
+      { chave: 'whatsapp_templates', valor: { ...tpl, ...Object.fromEntries(['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento', 'pre_cadastro'].map((k) => [k, (v['tpl_' + k] || '').trim()])) } },
     ];
     rodar(e.target.querySelector('.btn'), async () => { for (const r of regs) chk(await sb.from('configuracoes').update({ valor: r.valor }).eq('chave', r.chave)); toast('Regras salvas.'); });
   };
