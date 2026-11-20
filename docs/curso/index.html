@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Curso de Instalação · RJ Domótica</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#0b0d10; --sf:#15181d; --ln:#262a31; --tx:#e8eaed; --mu:#9aa3ad; --ci:#38d6f5; --la:#ff8a3d; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--tx); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ci); }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { padding: 8px 0 24px; border-bottom: 1px solid var(--ln); margin-bottom: 24px; }
+  .marca { color: var(--ci); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { font-size: clamp(26px, 5vw, 36px); line-height: 1.15; margin: 8px 0 10px; letter-spacing: -.02em; }
+  .sub { color: var(--mu); margin: 0 0 18px; max-width: 640px; }
+  .acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; background: var(--ci); color: #06222a; font-weight: 700; text-decoration: none; padding: 10px 16px; border-radius: 10px; }
+  .btn.sec { background: transparent; color: var(--tx); border: 1px solid var(--ln); }
+  .prog { color: var(--mu); font-size: 14px; margin-left: auto; }
+  .barra { height: 6px; background: var(--ln); border-radius: 99px; overflow: hidden; margin-top: 14px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--la); transition: width .3s; }
+
+  .aulas { display: grid; gap: 14px; }
+  .aula { background: var(--sf); border: 1px solid var(--ln); border-radius: 14px; overflow: hidden; }
+  .aula > summary { list-style: none; cursor: pointer; display: flex; gap: 14px; align-items: center; padding: 16px; }
+  .aula > summary::-webkit-details-marker { display: none; }
+  .n { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: #0f2a31; color: var(--ci); font-weight: 800; }
+  .aula.feita .n { background: var(--la); color: #2a1400; }
+  .t { flex: 1; min-width: 0; }
+  .t b { display: block; font-size: 16px; }
+  .t span { color: var(--mu); font-size: 13px; }
+  .seta { color: var(--mu); transition: transform .2s; }
+  .aula[open] .seta { transform: rotate(90deg); }
+  .corpo { padding: 0 16px 18px; }
+  .video { position: relative; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid var(--ln); }
+  .video iframe, .video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video .vazio { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--mu); padding: 16px; font-size: 14px; }
+  .corpo ul { padding-left: 20px; margin: 14px 0; }
+  .corpo li { margin-bottom: 6px; }
+  .alerta { border-left: 3px solid var(--la); background: #23160d; padding: 10px 12px; border-radius: 8px; font-size: 14px; margin: 12px 0; }
+  .rod { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .rod small { color: var(--mu); }
+  label.ok { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: 14px; }
+  label.ok input { width: 18px; height: 18px; accent-color: var(--la); }
+  code { background: #0f1216; border: 1px solid var(--ln); padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+  footer { color: var(--mu); font-size: 13px; margin-top: 32px; border-top: 1px solid var(--ln); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="marca">RJ Domótica · Instaladores parceiros</div>
+    <h1>Mini curso de instalação do rastreador J16</h1>
+    <p class="sub">Seis aulas curtas, do chip à entrega do veículo. Assista aos vídeos, acompanhe pela apostila e use o checklist em toda instalação.</p>
+    <div class="acoes">
+      <a class="btn" href="#" id="pdf" download>⬇ Apostila em PDF</a>
+      <a class="btn sec" href="#" id="checklist" target="_blank" rel="noopener">Checklist de entrega</a>
+      <span class="prog" id="prog">0 de 6 aulas concluídas</span>
+    </div>
+    <div class="barra"><i id="barra"></i></div>
+  </header>
+
+  <main class="aulas" id="aulas"><p class="sub" id="carregando">Carregando o curso…</p></main>
+
+  <footer>Dúvidas durante uma instalação: fale com o suporte da RJ Domótica pelo WhatsApp antes de improvisar.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(async function () {
+  var sb = supabase.createClient("https://xpafmvjlwgmhmvhfsqrg.supabase.co", "sb_publishable_78XLEJvUXYmVjzEzfEiz6Q_l3c5EiTw");
+  var LOGIN = "../instalador/";
+  function semAcesso(t) { document.getElementById("aulas").innerHTML = '<div class="aula" style="padding:16px"><p></p><a class="btn" href="' + LOGIN + '">Entrar na área do instalador</a></div>'; document.querySelector("#aulas p").textContent = t; }
+
+  var s = (await sb.auth.getSession()).data.session;
+  if (!s) return semAcesso("O curso é exclusivo para instaladores credenciados. Entre com seu usuário para continuar.");
+  var ok = await sb.rpc("is_instalador"), adm = ok.data ? null : await sb.rpc("is_admin");
+  if (!ok.data && !(adm && adm.data)) return semAcesso("Seu usuário não tem acesso ao curso. Fale com a RJ Domótica.");
+
+  async function assinada(arquivo, seg) { var r = await sb.storage.from("curso").createSignedUrl(arquivo, seg || 3600); return r.data && r.data.signedUrl; }
+  var html = await assinada("conteudo.html", 60);
+  var resp = html && await fetch(html);
+  if (!resp || !resp.ok) return semAcesso("Não foi possível carregar o curso agora. Tente de novo em instantes.");
+  document.getElementById("aulas").innerHTML = await resp.text();
+  var pdf = await assinada("apostila-instalacao-j16.pdf", 3600);
+  if (pdf) { document.getElementById("pdf").href = pdf; document.getElementById("checklist").href = pdf + "#page=11"; document.getElementById("checklist").target = "_blank"; }
+
+  var KEY = "rj-curso-instalacao", feitas = {};
+  try { feitas = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  var aulas = document.querySelectorAll(".aula");
+  function salvar() { try { localStorage.setItem(KEY, JSON.stringify(feitas)); } catch (e) {} }
+  function progresso() {
+    var n = 0;
+    aulas.forEach(function (a) { var f = !!feitas[a.dataset.id]; a.classList.toggle("feita", f); if (f) n++; });
+    document.getElementById("prog").textContent = n + " de " + aulas.length + " aulas concluídas";
+    document.getElementById("barra").style.width = (n / aulas.length * 100) + "%";
+  }
+  for (const a of aulas) {
+    var box = a.querySelector(".video"), v = a.dataset.video;
+    if (!v) {
+      box.innerHTML = '<div class="vazio">Vídeo em produção.<br>Enquanto isso, acompanhe pela apostila em PDF.</div>';
+    } else if (v.indexOf("yt:") === 0) {
+      var f = document.createElement("iframe");
+      f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(v.slice(3)) + "?rel=0";
+      f.title = a.querySelector(".t b").textContent; f.loading = "lazy";
+      f.allow = "accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"; f.allowFullscreen = true;
+      box.appendChild(f);
+    } else if (v.indexOf("curso:") === 0) {
+      var src = await assinada(v.slice(6), 4 * 3600);
+      var vid = document.createElement(/\.mp3$/i.test(v) ? "audio" : "video");
+      vid.src = src; vid.controls = true; vid.preload = "metadata"; vid.playsInline = true;
+      if (vid.tagName === "AUDIO") { box.style.aspectRatio = "auto"; box.style.background = "transparent"; box.style.border = "0"; vid.style.width = "100%"; vid.style.position = "static"; }
+      vid.setAttribute("controlsList", "nodownload");
+      box.appendChild(vid);
+    }
+    const cb = a.querySelector('input[type="checkbox"]'), id = a.dataset.id;
+    cb.checked = !!feitas[id];
+    cb.addEventListener("change", function () { feitas[id] = cb.checked; salvar(); progresso(); });
+  }
+  progresso();
+})();
+</script>
+</body>
+</html>
