@@ -104,6 +104,15 @@ code{background:var(--sf2);border:1px solid var(--ln);border-radius:8px;padding:
     <button class="btn" type="submit" style="justify-content:center;height:46px">Entrar</button>
     <button class="btn2" type="button" id="l-criar" style="justify-content:center">Primeiro acesso: criar conta de administrador</button>
   </form>
+  <form class="caixa oculto" id="f-nova-senha">
+    <img src="{{LOGO}}" alt="RJ Domótica">
+    <div class="orb" style="text-align:center;font-size:12px;letter-spacing:4px;color:var(--ci)">CRIE SUA SENHA</div>
+    <p class="mu pq" style="text-align:center;line-height:1.6;margin:0">Escolha a senha para entrar no painel. Use pelo menos 8 caracteres.</p>
+    <label class="campo">Nova senha<input id="ns-1" type="password" autocomplete="new-password" required minlength="8"></label>
+    <label class="campo">Repita a senha<input id="ns-2" type="password" autocomplete="new-password" required minlength="8"></label>
+    <div class="erro" id="ns-erro" role="alert"></div>
+    <button class="btn" type="submit" style="justify-content:center;height:46px">Salvar senha e entrar</button>
+  </form>
 </section>
 
 <!-- APP -->
@@ -116,6 +125,7 @@ code{background:var(--sf2);border:1px solid var(--ln);border-radius:8px;padding:
     <a href="#cobrancas" data-r="cobrancas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Cobranças</a>
     <a href="#instaladores" data-r="instaladores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Instaladores</a>
     <a href="#mensagens" data-r="mensagens"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensagens</a>
+    <a href="#equipe" data-r="equipe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Equipe</a>
     <a href="#config" data-r="config"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Configurações</a>
     <div class="rod"><span id="quem"></span><button class="btn2 mini" id="sair">Sair</button></div>
   </aside>
@@ -235,7 +245,7 @@ function rota() {
   const [r, id] = (location.hash.slice(1) || 'inicio').split('-c-');
   $$('aside a').forEach((a) => a.classList.toggle('ativo', a.dataset.r === (r === 'cliente' ? 'clientes' : r)));
   fecharModal();
-  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, instaladores: telaInstaladores, mensagens: telaMensagens, config: telaConfig };
+  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, instaladores: telaInstaladores, equipe: telaEquipe, mensagens: telaMensagens, config: telaConfig };
   (telas[r] || telaInicio)();
   window.scrollTo(0, 0);
 }
@@ -621,17 +631,65 @@ function formInstalador(i, email) {
   };
 }
 
+/* ---------- equipe (administradores) ---------- */
+async function telaEquipe() {
+  const m = $('#main');
+  m.innerHTML = `<div class="cab"><h1>Equipe</h1><button class="btn" id="b-novo-a">+ Adicionar administrador</button></div>
+  <p class="mu" style="margin:-6px 0 14px;line-height:1.6">Administradores entram neste painel e podem fazer tudo: clientes, cobranças, instaladores e configurações.</p>
+  <div class="painel" style="padding:4px 8px"><div class="rolagem" id="lista"><div class="vazio">Carregando…</div></div></div>`;
+  $('#b-novo-a').onclick = () => formAdmin();
+  let l;
+  try { l = (await api('listar_admins')).admins; } catch (e) { if ($('#lista')) $('#lista').innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; return; }
+  if (!$('#lista')) return;
+  $('#lista').innerHTML = `<table class="tab"><thead><tr><th>Administrador</th><th>Desde</th><th>Último acesso</th><th></th></tr></thead><tbody>${l.map((a) => `<tr><td><b>${esc(a.nome || '—')}</b>${a.voce ? ' <span class="badge b-ci">você</span>' : ''}<div class="mu pq">${esc(a.email)}</div></td><td>${dataBR(a.created_at)}</td><td class="pq">${a.ultimo_acesso ? dataHora(a.ultimo_acesso) : '<span class="mu">Ainda não entrou</span>'}</td><td style="white-space:nowrap">${a.voce ? '' : `<button class="btn2 mini" data-link="${a.user_id}">Gerar link de acesso</button> <button class="btn2 mini btn-vm" data-rm="${a.user_id}">Remover</button>`}</td></tr>`).join('')}</tbody></table>`;
+  $$('[data-link]').forEach((b) => b.onclick = () => rodar(b, async () => { const a = l.find((x) => x.user_id === b.dataset.link); const r = await api('link_admin', { user_id: a.user_id }); mostrarLinkAdmin(a.nome || a.email, r.link, false); }));
+  $$('[data-rm]').forEach((b) => b.onclick = async () => { const a = l.find((x) => x.user_id === b.dataset.rm); if (await confirmar('Remover ' + (a.nome || a.email) + '?', 'A pessoa deixa de entrar no painel. O histórico continua salvo. Dá para adicionar de novo depois.', 'Remover', true)) rodar(null, async () => { await api('remover_admin', { user_id: a.user_id }); toast('Administrador removido.'); telaEquipe(); }); });
+}
+function mostrarLinkAdmin(nome, link, novo) {
+  const texto = `Olá, ${String(nome).split(' ')[0]}! ${novo ? 'Você foi adicionado como administrador do painel RJ Domótica.' : 'Aqui está seu link de acesso ao painel RJ Domótica.'} Toque no link para criar sua senha: ${link} Depois, entre em app.rjdomotica.com/admin com seu e-mail e a senha criada.`;
+  const m = modal(`<div class="cab"><h1 style="font-size:18px">${novo ? 'Administrador adicionado' : 'Link de acesso gerado'}</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
+  <p style="line-height:1.6;margin:0 0 12px">Mande este link para a pessoa (por exemplo, pelo WhatsApp). Ao abrir, ela cria a própria senha.</p>
+  <div style="background:#0b0d10;border:1px solid #262a31;border-radius:10px;padding:10px;font-family:monospace;font-size:12px;word-break:break-all;max-height:110px;overflow:auto">${esc(link)}</div>
+  <p class="mu pq" style="margin:10px 0 16px;line-height:1.5">O link é de uso único e expira (padrão do Supabase: 1 hora). Se expirar, use "Gerar link de acesso" na lista.</p>
+  <div class="acoes" style="justify-content:flex-end"><button class="btn2" id="b-cp">Copiar mensagem</button><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(texto)}">Abrir no WhatsApp</a></div>`, true);
+  $('[data-x]', m).onclick = () => { fecharModal(); telaEquipe(); };
+  $('#b-cp', m).onclick = () => copiar(texto);
+}
+function formAdmin() {
+  const m = modal(`<div class="cab"><h1 style="font-size:18px">Adicionar administrador</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
+  <form class="form" id="fa" novalidate>
+    <label class="campo req c12"><span>Nome</span><input name="nome" required></label>
+    <label class="campo req c12"><span>E-mail (login do painel)</span><input name="email" type="email" required></label>
+    <div class="c12" id="fa-erro" style="color:#ff8a80"></div>
+    <div class="c12 acoes" style="justify-content:flex-end"><button type="button" class="btn2" data-x>Cancelar</button><button class="btn" type="submit">Adicionar e gerar acesso</button></div>
+  </form>`, true);
+  $$('[data-x]', m).forEach((b) => b.onclick = fecharModal);
+  $('#fa', m).onsubmit = (e) => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(e.target).entries()), err = $('#fa-erro', m);
+    err.textContent = '';
+    if ((v.nome || '').trim().length < 3) return err.textContent = 'Informe o nome.';
+    if (!/^\S+@\S+\.\S+$/.test(v.email || '')) return err.textContent = 'E-mail inválido.';
+    rodar(e.target.querySelector('[type=submit]'), async () => {
+      const r = await api('convidar_admin', { nome: v.nome.trim(), email: v.email.trim().toLowerCase() });
+      fecharModal(); mostrarLinkAdmin(v.nome.trim(), r.link, true);
+    });
+  };
+}
+
 /* ---------- configurações ---------- */
 async function telaConfig() {
   const m = $('#main');
   m.innerHTML = '<div class="cab"><h1>Configurações</h1></div><div class="vazio">Carregando…</div>';
-  let integ, cfgs, fer;
+  let integ, cfgs, fer, horario;
   try {
-    [integ, cfgs, fer] = await Promise.all([api('integracoes'), sb.from('configuracoes').select('*').then(chk), sb.from('feriados').select('*').gte('data', hoje().slice(0, 4) + '-01-01').order('data').then(chk)]);
+    [integ, cfgs, fer, horario] = await Promise.all([api('integracoes'), sb.from('configuracoes').select('*').then(chk), sb.from('feriados').select('*').gte('data', hoje().slice(0, 4) + '-01-01').order('data').then(chk), sb.rpc('horario_rotina').then((r) => r.data || '09:05')]);
   } catch (e) { m.querySelector('.vazio').textContent = e.message; return; }
   const C = Object.fromEntries(cfgs.map((x) => [x.chave, x.valor]));
   const linhaInteg = (nome, ok, falta) => `<div class="integ"><div><b>${nome}</b><div class="mu pq">${ok ? 'Conectado' : 'Falta configurar: ' + falta}</div></div>${ok ? '<span class="badge b-ok">Ativo</span>' : '<span class="badge b-mu">Simulado</span>'}</div>`;
   const tpl = C.whatsapp_templates || {};
+  const OF = { preco_cheio: 64.9, preco_promo: 54.9, meses_promo: 12, instalacao_cheia: 99.9, instalacao_promo: 49.95, data_estreia: '2027-01-04', ...(C.oferta || {}) };
+  const fmtNum = (n) => Number(n).toFixed(2).replace('.', ',');
   m.innerHTML = `<div class="cab"><h1>Configurações</h1></div>
   <div class="grid2">
     <div class="painel"><h2>Integrações</h2>
@@ -649,18 +707,65 @@ async function telaConfig() {
         <label class="campo c6"><span>Gerar cobrança quantos dias antes</span><input name="dias_antecedencia_cobranca" type="number" min="1" max="25" value="${esc(C.dias_antecedencia_cobranca)}"></label>
         <label class="campo c6"><span>Lembretes (dias antes; 0 = no dia)</span><input name="dias_lembrete" value="${esc((C.dias_lembrete || []).join(', '))}"></label>
         <label class="campo c6"><span>Bloquear após quantos dias úteis de atraso</span><input name="dias_uteis_bloqueio" type="number" min="1" max="15" value="${esc(C.dias_uteis_bloqueio)}"></label>
-        <p class="mu pq c12" style="margin:0;line-height:1.6">Exemplo com 2: venceu na sexta, a tolerância é segunda e terça, e o bloqueio acontece na quarta às 9h. A rotina roda todo dia às 9h05.</p>
+        <p class="mu pq c12" style="margin:0;line-height:1.6">Exemplo com 2: venceu na sexta, a tolerância é segunda e terça, e o bloqueio acontece na quarta, na rotina das ${esc(horario)}.</p>
+        <label class="campo c6"><span>Horário da rotina diária (Brasília)</span><input name="horario_rotina" type="time" value="${esc(horario)}"></label>
         <div class="sec">MODELOS DO WHATSAPP (NOME APROVADO NA META)</div>
         ${['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento', 'pre_cadastro'].map((k) => `<label class="campo c4"><span>${{ cobranca: 'Nova cobrança', lembrete: 'Lembrete', vencida: 'Atraso', bloqueio: 'Bloqueio', pagamento: 'Pagamento', pre_cadastro: 'Pré-cadastro' }[k]}</span><input name="tpl_${k}" value="${esc(tpl[k] || '')}"></label>`).join('')}
         <div class="acoes c12" style="justify-content:flex-end"><button class="btn">Salvar regras</button></div>
       </form>
     </div>
   </div>
+  <div class="grid2">
+    <div class="painel"><h2>Oferta e preços</h2>
+      <p class="mu pq" style="line-height:1.6;margin:0 0 10px">Valores mostrados no app (tela de pré-cadastro e contagem para a estreia) e usados nos novos pré-cadastros e nas mensagens. Quem já se pré-cadastrou mantém o valor que garantiu.</p>
+      <form class="form" id="foferta">
+        <label class="campo c6"><span>Mensalidade normal (R$)</span><input name="preco_cheio" inputmode="decimal" value="${esc(fmtNum(OF.preco_cheio))}"></label>
+        <label class="campo c6"><span>Mensalidade promocional (R$)</span><input name="preco_promo" inputmode="decimal" value="${esc(fmtNum(OF.preco_promo))}"></label>
+        <label class="campo c6"><span>Meses com o preço promocional</span><input name="meses_promo" type="number" min="1" max="60" value="${esc(OF.meses_promo)}"></label>
+        <label class="campo c6"><span>Data de estreia do app</span><input name="data_estreia" type="date" value="${esc(OF.data_estreia)}"></label>
+        <label class="campo c6"><span>Instalação normal (R$)</span><input name="instalacao_cheia" inputmode="decimal" value="${esc(fmtNum(OF.instalacao_cheia))}"></label>
+        <label class="campo c6"><span>Instalação promocional (R$)</span><input name="instalacao_promo" inputmode="decimal" value="${esc(fmtNum(OF.instalacao_promo))}"></label>
+        <div class="acoes c12" style="justify-content:flex-end"><button class="btn">Salvar oferta</button></div>
+      </form>
+    </div>
+    <div class="painel"><h2>Modelos do WhatsApp na Meta</h2>
+      <p class="mu pq" style="line-height:1.6;margin:0 0 10px">A Meta precisa aprovar cada modelo antes de o sistema enviar mensagens por ele.</p>
+      <div class="busca"><input id="waba" value="${esc(C.whatsapp_waba_id || '')}" placeholder="Identificação da conta (WABA)" aria-label="Identificação da conta do WhatsApp (WABA)" style="flex:1 1 200px"><button class="btn2" id="b-waba">Salvar</button><button class="btn" id="b-modelos">Conferir na Meta</button></div>
+      <div id="modelos" class="rolagem"><div class="mu pq" style="padding:6px 0">Toque em "Conferir na Meta" para ver a situação de cada modelo.</div></div>
+      <div class="sec">ENVIAR MENSAGEM DE TESTE</div>
+      <div class="busca"><select id="t-tipo" aria-label="Modelo">${['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento', 'pre_cadastro'].map((k) => `<option value="${k}">${esc({ cobranca: 'Nova cobrança', lembrete: 'Lembrete', vencida: 'Atraso', bloqueio: 'Bloqueio', pagamento: 'Pagamento', pre_cadastro: 'Pré-cadastro' }[k])}${tpl[k] ? ' · ' + esc(tpl[k]) : ''}</option>`).join('')}</select><input id="t-fone" type="tel" placeholder="Seu WhatsApp com DDD" aria-label="WhatsApp que recebe o teste" style="flex:1 1 160px"><button class="btn2" id="b-teste">Enviar teste</button></div>
+      <p class="mu pq" style="margin:6px 0 0;line-height:1.5">A mensagem sai de verdade, com dados de exemplo. Só funciona depois que o modelo estiver aprovado.</p>
+    </div>
+  </div>
+
   <div class="painel"><h2>Feriados (não contam como dia útil)</h2>
     <div class="busca"><input type="date" id="fer-d" aria-label="Data"><input id="fer-n" placeholder="Nome do feriado" style="flex:1 1 220px" aria-label="Nome do feriado"><button class="btn2" id="fer-add">Adicionar</button></div>
     <div class="rolagem"><table class="tab"><tbody>${fer.map((x) => `<tr><td style="white-space:nowrap">${dataBR(x.data)}</td><td>${esc(x.nome)}</td><td style="text-align:right"><button class="btn2 mini" data-fer="${x.data}">Remover</button></td></tr>`).join('')}</tbody></table></div>
   </div>`;
   $('#cp-wh').onclick = () => copiar(integ.webhook_url);
+  $('#foferta').onsubmit = (e) => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(e.target)), num = (x) => Number(String(x || '').replace(/\./g, '').replace(',', '.'));
+    const of = { preco_cheio: num(v.preco_cheio), preco_promo: num(v.preco_promo), meses_promo: Math.round(Number(v.meses_promo)), instalacao_cheia: num(v.instalacao_cheia), instalacao_promo: num(v.instalacao_promo), data_estreia: v.data_estreia };
+    if (!(of.preco_cheio > 0 && of.preco_promo > 0 && of.instalacao_cheia > 0 && of.instalacao_promo >= 0)) return toast('Preencha todos os valores.', true);
+    if (of.preco_promo > of.preco_cheio || of.instalacao_promo > of.instalacao_cheia) return toast('O preço promocional não pode ser maior que o normal.', true);
+    if (!(of.meses_promo >= 1)) return toast('Informe os meses da promoção.', true);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(of.data_estreia || '')) return toast('Informe a data de estreia.', true);
+    rodar(e.target.querySelector('.btn'), async () => { chk(await sb.from('configuracoes').upsert({ chave: 'oferta', valor: of })); toast('Oferta salva. O app já mostra os novos valores.'); });
+  };
+  $('#b-waba').onclick = (e) => rodar(e.currentTarget, async () => { chk(await sb.from('configuracoes').upsert({ chave: 'whatsapp_waba_id', valor: so($('#waba').value) })); toast('Conta do WhatsApp salva.'); });
+  $('#b-modelos').onclick = (e) => rodar(e.currentTarget, async () => {
+    const r = await api('whatsapp_modelos'), ST = { APPROVED: ['Aprovado', 'b-ok'], PENDING: ['Em análise', 'b-ci'], REJECTED: ['Rejeitado', 'b-vm'], PAUSED: ['Pausado', 'b-la'], DISABLED: ['Desativado', 'b-mu'], IN_APPEAL: ['Em recurso', 'b-la'] };
+    const usados = new Set(Object.values(tpl).filter(Boolean));
+    const lista = r.modelos.filter((x) => usados.has(x.nome)).concat(r.modelos.filter((x) => !usados.has(x.nome)));
+    $('#modelos').innerHTML = lista.length ? `<table class="tab"><tbody>${lista.map((x) => { const st = ST[x.status] || [x.status, 'b-mu']; return `<tr><td><code>${esc(x.nome)}</code><div class="mu pq">${esc(x.categoria || '')} · ${esc(x.idioma || '')}${usados.has(x.nome) ? '' : ' · não usado'}</div></td><td style="text-align:right"><span class="badge ${st[1]}">${esc(st[0])}</span>${x.motivo ? `<div class="pq" style="color:#ffb38a">${esc(x.motivo)}</div>` : ''}</td></tr>`; }).join('')}</tbody></table>` : '<div class="vazio">Nenhum modelo encontrado nesta conta.</div>';
+  });
+  $('#b-teste').onclick = (e) => {
+    const fone = so($('#t-fone').value);
+    if (fone.length < 10) return toast('Informe o WhatsApp com DDD.', true);
+    rodar(e.currentTarget, async () => { const r = await api('whatsapp_teste', { tipo: $('#t-tipo').value, telefone: fone, nome: sessao.user.email.split('@')[0] }); toast('Teste enviado (' + r.modelo + ').'); });
+  };
+
   $('#fcfg').onsubmit = (e) => {
     e.preventDefault();
     const v = Object.fromEntries(new FormData(e.target));
@@ -672,13 +777,39 @@ async function telaConfig() {
       { chave: 'dias_uteis_bloqueio', valor: Math.max(1, Number(v.dias_uteis_bloqueio) || 2) },
       { chave: 'whatsapp_templates', valor: { ...tpl, ...Object.fromEntries(['cobranca', 'lembrete', 'vencida', 'bloqueio', 'pagamento', 'pre_cadastro'].map((k) => [k, (v['tpl_' + k] || '').trim()])) } },
     ];
-    rodar(e.target.querySelector('.btn'), async () => { for (const r of regs) chk(await sb.from('configuracoes').update({ valor: r.valor }).eq('chave', r.chave)); toast('Regras salvas.'); });
+    rodar(e.target.querySelector('.btn'), async () => {
+      for (const r of regs) chk(await sb.from('configuracoes').update({ valor: r.valor }).eq('chave', r.chave));
+      if (v.horario_rotina && v.horario_rotina !== horario) { const [hh, mm] = v.horario_rotina.split(':').map(Number); const r = await sb.rpc('definir_horario_rotina', { p_hora: hh, p_minuto: mm }); if (r.error) throw new Error(r.error.message); horario = r.data; }
+      toast('Regras salvas.'); telaConfig();
+    });
   };
   $('#fer-add').onclick = (e) => { const d = $('#fer-d').value, n = $('#fer-n').value.trim(); if (!d || !n) return toast('Informe a data e o nome.', true); rodar(e.currentTarget, async () => { chk(await sb.from('feriados').upsert({ data: d, nome: n })); telaConfig(); }); };
   $$('[data-fer]').forEach((b) => b.onclick = () => rodar(b, async () => { chk(await sb.from('feriados').delete().eq('data', b.dataset.fer)); telaConfig(); }));
 }
 
-iniciar();
+/* ---------- criar senha pelo link de acesso (#acesso=código) ---------- */
+let codigoAcesso = (location.hash.match(/acesso=([^&]+)/) || [])[1] || '';
+if (codigoAcesso) {
+  $('#app').classList.add('oculto'); $('#login').classList.remove('oculto');
+  $('#f-login').classList.add('oculto'); $('#f-nova-senha').classList.remove('oculto');
+  $('#f-nova-senha').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const a = $('#ns-1').value, b = $('#ns-2').value, err = $('#ns-erro'), btn = e.target.querySelector('.btn');
+    err.textContent = '';
+    if (a.length < 8) return err.textContent = 'A senha precisa ter pelo menos 8 caracteres.';
+    if (a !== b) return err.textContent = 'As duas senhas não são iguais.';
+    btn.disabled = true;
+    const v = await sb.auth.verifyOtp({ token_hash: codigoAcesso, type: 'recovery' });
+    if (v.error) { btn.disabled = false; return err.textContent = 'Este link expirou ou já foi usado. Peça um novo link a outro administrador.'; }
+    const r = await sb.auth.updateUser({ password: a });
+    btn.disabled = false;
+    if (r.error) return err.textContent = r.error.message;
+    codigoAcesso = '';
+    history.replaceState(null, '', location.pathname);
+    $('#f-nova-senha').classList.add('oculto'); $('#f-login').classList.remove('oculto');
+    iniciar();
+  });
+} else iniciar();
 </script>
 </body>
 </html>

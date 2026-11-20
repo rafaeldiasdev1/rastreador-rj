@@ -32,6 +32,9 @@ const mesBR = (c: string) => new Date(c + "T12:00:00Z").toLocaleDateString("pt-B
 const competenciaDe = (d: string) => d.slice(0, 8) + "01";
 const vencimentoDe = (competencia: string, dia: number) => competencia.slice(0, 8) + String(dia).padStart(2, "0");
 const primeiroNome = (n: string) => n.trim().split(/\s+/)[0];
+// Oferta do pré-cadastro (editável no painel em Configurações → Oferta e preços)
+const OFERTA_PADRAO = { preco_cheio: 64.9, preco_promo: 54.9, meses_promo: 12, instalacao_cheia: 99.9, instalacao_promo: 49.95, data_estreia: "2027-01-04" };
+const ofertaDe = (cfg: Obj) => ({ ...OFERTA_PADRAO, ...(cfg?.oferta || {}) });
 
 // deno-lint-ignore no-explicit-any
 type Obj = Record<string, any>;
@@ -154,6 +157,7 @@ async function criarPagamentosMP(cli: Obj, cob: Obj, empresa: string) {
 // ---------------- mensagens: e-mail (Resend) e WhatsApp (API oficial da Meta) ----------------
 function conteudo(tipo: string, cli: Obj, cob: Obj | null, empresa: string, extra: Obj) {
   const nome = primeiroNome(cli.nome);
+  const of = extra.oferta || OFERTA_PADRAO;
   const link = cob ? (cob.pix_url || cob.boleto_url || "") : "";
   const valor = cob ? brl(cob.valor) : "", venc = cob ? dataBR(cob.vencimento) : "", mes = cob ? mesBR(cob.competencia) : "";
   const T: Obj = {
@@ -173,7 +177,7 @@ function conteudo(tipo: string, cli: Obj, cob: Obj | null, empresa: string, extr
       texto: `Olá, ${nome}! Recebemos o pagamento de ${valor} referente a ${mes}.${extra.desbloqueado ? " Seu acesso ao app já foi liberado." : ""}`,
       params: [nome, mes, valor] },
     pre_cadastro: { assunto: `${empresa} · Recebemos seu pré-cadastro`, titulo: "Obrigado pelo seu pré-cadastro!",
-      texto: `Olá, ${nome}! Recebemos o seu pré-cadastro no rastreamento ${empresa}. Obrigado pela confiança!<br><br>Assim que iniciarmos o processo de instalação dos rastreadores, entraremos em contato pelo WhatsApp ou por este e-mail para agendar a instalação no seu veículo.<br><br>Sua condição especial já está garantida: <b style="color:#e8eaed">${brl(PRECO_PROMO)}/mês por 12 meses</b> e instalação com 50% de desconto (${brl(49.95)}), paga só no dia da instalação. Não é preciso fazer nada agora.`,
+      texto: `Olá, ${nome}! Recebemos o seu pré-cadastro no rastreamento ${empresa}. Obrigado pela confiança!<br><br>Assim que iniciarmos o processo de instalação dos rastreadores, entraremos em contato pelo WhatsApp ou por este e-mail para agendar a instalação no seu veículo.<br><br>Sua condição especial já está garantida: <b style="color:#e8eaed">${brl(of.preco_promo)}/mês por ${of.meses_promo} meses</b> e instalação por ${brl(of.instalacao_promo)} (em vez de ${brl(of.instalacao_cheia)}), paga só no dia da instalação. Não é preciso fazer nada agora.`,
       params: [nome] },
   };
   return T[tipo];
@@ -205,7 +209,7 @@ async function logMsg(cli: Obj, cob: Obj | null, canal: string, tipo: string, de
 }
 async function notificar(cli: Obj, cob: Obj | null, tipo: string, cfg: Obj, extra: Obj = {}, chave = tipo) {
   const empresa = cfg.nome_empresa || "RJ Domótica";
-  const c = conteudo(tipo, cli, cob, empresa, extra);
+  const c = conteudo(tipo, cli, cob, empresa, { oferta: ofertaDe(cfg), ...extra });
   // e-mail
   if (env("RESEND_API_KEY") && env("EMAIL_REMETENTE")) {
     try {
@@ -383,13 +387,13 @@ async function webhookMP(req: Request) {
 }
 
 // ---------------- pré-cadastro (rota pública, usada pelo app) ----------------
-const PRECO_CHEIO = 64.9, PRECO_PROMO = 54.9; // promoção travada para quem se pré-cadastra
 const TIPOS_VEIC = ["carro", "moto", "caminhao", "outros"];
 const CORES_VEIC = ["Branco", "Preto", "Prata", "Cinza", "Vermelho", "Azul", "Verde", "Amarelo", "Laranja", "Marrom", "Bege", "Dourado", "Vinho", "Rosa"];
 const soDig = (s: unknown) => String(s ?? "").replace(/\D/g, "");
 const limpa = (s: unknown, max: number) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 async function preCadastro(req: Request) {
   const b: Obj = await req.json().catch(() => ({}));
+  const cfgPre = await config(), of = ofertaDe(cfgPre);
   if (b.site) return json({ ok: true }); // campo-isca: robô preencheu, finge que deu certo
   const nome = limpa(b.nome, 100), email = limpa(b.email, 120).toLowerCase();
   let zap = soDig(b.whatsapp); if (zap.length === 10 || zap.length === 11) zap = "55" + zap;
@@ -413,32 +417,33 @@ async function preCadastro(req: Request) {
 
   // quem já está na base não duplica (resposta igual, sem revelar nada)
   const { count: jaTem } = await db.from("clientes").select("id", { count: "exact", head: true }).eq("email", email);
-  if (jaTem) return json({ ok: true, valor: PRECO_PROMO });
+  if (jaTem) return json({ ok: true, valor: of.preco_promo });
 
-  const obs = `Pré-cadastro pelo app. Promoção travada: ${brl(PRECO_PROMO)}/mês por 12 meses (preço cheio ${brl(PRECO_CHEIO)}). Instalação com 50% de desconto (R$ 49,95 em vez de R$ 99,90). Pagamento só no ato da instalação.`;
+  const obs = `Pré-cadastro pelo app. Promoção travada: ${brl(of.preco_promo)}/mês por ${of.meses_promo} meses (preço cheio ${brl(of.preco_cheio)}). Instalação por ${brl(of.instalacao_promo)} em vez de ${brl(of.instalacao_cheia)}. Pagamento só no ato da instalação.`;
   const { data: cli, error } = await db.from("clientes").insert({
-    nome, email, whatsapp: zap, tipo_pessoa: "PF", valor_mensal: PRECO_PROMO, dia_vencimento: 10, status: "pre_cadastro", observacoes: obs,
+    nome, email, whatsapp: zap, tipo_pessoa: "PF", valor_mensal: of.preco_promo, dia_vencimento: 10, status: "pre_cadastro", observacoes: obs,
   }).select().single();
   if (error || !cli) throw new Error("Não foi possível salvar o pré-cadastro.");
   for (const v of veics) {
     let r = await db.from("veiculos").insert({ cliente_id: cli.id, ...v, ativo: true });
     if (r.error && v.placa) r = await db.from("veiculos").insert({ cliente_id: cli.id, ...v, placa: null, ativo: true }); // placa já existe: grava sem ela
   }
-  await registrar(cli.id, "pre_cadastro", `Pré-cadastro recebido pelo app (${veics.length} veículo(s)). Autorizou contato. Promoção ${brl(PRECO_PROMO)}/mês.`, "app");
+  await registrar(cli.id, "pre_cadastro", `Pré-cadastro recebido pelo app (${veics.length} veículo(s)). Autorizou contato. Promoção ${brl(of.preco_promo)}/mês.`, "app");
   // agradecimento por e-mail e WhatsApp; uma falha aqui nunca derruba o pré-cadastro
-  try { await notificar(cli, null, "pre_cadastro", await config()); } catch (e) { console.error("agradecimento pré-cadastro:", e); }
-  return json({ ok: true, valor: PRECO_PROMO });
+  try { await notificar(cli, null, "pre_cadastro", cfgPre); } catch (e) { console.error("agradecimento pré-cadastro:", e); }
+  return json({ ok: true, valor: of.preco_promo });
 }
 
 // ---------------- instaladores (convite e link de acesso) ----------------
 const URL_INSTALADOR = "https://app.rjdomotica.com/instalador/";
-async function linkAcessoInstalador(email: string) {
-  // link de uso único para o instalador criar a própria senha (vale pelo prazo configurado no Supabase Auth)
-  const { data, error } = await db.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: URL_INSTALADOR } });
+const URL_ADMIN = "https://app.rjdomotica.com/admin/";
+async function linkAcessoInstalador(email: string, url = URL_INSTALADOR) {
+  // link de uso único para criar a própria senha (vale pelo prazo configurado no Supabase Auth)
+  const { data, error } = await db.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: url } });
   if (error || !data?.properties?.hashed_token) throw new Error("Não foi possível gerar o link de acesso: " + (error?.message || "sem link"));
   // O código vai depois do "#": a prévia do WhatsApp/e-mail abre a página mas não gasta o código.
   // Ele só é validado quando o instalador toca em "Salvar senha e entrar".
-  return { link: `${URL_INSTALADOR}#acesso=${data.properties.hashed_token}`, user_id: data.user.id };
+  return { link: `${url}#acesso=${data.properties.hashed_token}`, user_id: data.user.id };
 }
 async function emailAcessoInstalador(email: string, nome: string, link: string, empresa: string, novo: boolean) {
   if (!(env("RESEND_API_KEY") && env("EMAIL_REMETENTE"))) return false;
@@ -448,6 +453,34 @@ async function emailAcessoInstalador(email: string, nome: string, link: string, 
   const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + env("RESEND_API_KEY"), "Content-Type": "application/json" },
     body: JSON.stringify({ from: env("EMAIL_REMETENTE"), to: [email], subject: `${empresa} · ${titulo}`, html, ...(env("EMAIL_RESPOSTA") ? { reply_to: env("EMAIL_RESPOSTA") } : {}) }) });
   return r.ok;
+}
+
+// ---------------- WhatsApp: modelos na Meta e mensagem de teste ----------------
+async function modelosWhatsApp(cfg: Obj) {
+  if (!env("WHATSAPP_TOKEN")) throw new Error("WhatsApp ainda não configurado (falta WHATSAPP_TOKEN nos segredos da função).");
+  const waba = String(cfg.whatsapp_waba_id || env("WHATSAPP_WABA_ID") || "").replace(/\D/g, "");
+  if (!waba) throw new Error("Informe a identificação da conta do WhatsApp (WABA) em Configurações.");
+  const r = await fetch(`https://graph.facebook.com/v21.0/${waba}/message_templates?fields=name,status,category,language,rejected_reason&limit=100`, { headers: { Authorization: "Bearer " + env("WHATSAPP_TOKEN") } });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("A Meta recusou a consulta: " + (d.error?.message || `HTTP ${r.status}`));
+  return (d.data || []).map((t: Obj) => ({ nome: t.name, status: t.status, categoria: t.category, idioma: t.language, motivo: t.rejected_reason && t.rejected_reason !== "NONE" ? t.rejected_reason : null }));
+}
+async function testeWhatsApp(cfg: Obj, tipo: string, telefone: string, nomeTeste: string) {
+  if (!(env("WHATSAPP_TOKEN") && env("WHATSAPP_PHONE_ID"))) throw new Error("WhatsApp ainda não configurado (faltam WHATSAPP_TOKEN e WHATSAPP_PHONE_ID).");
+  const modelo = (cfg.whatsapp_templates || {})[tipo];
+  if (!modelo) throw new Error("Este tipo de mensagem não tem modelo informado em Configurações.");
+  let fone = soDig(telefone); if (fone.length === 10 || fone.length === 11) fone = "55" + fone;
+  if (fone.length < 12) throw new Error("Telefone inválido: use DDD + número.");
+  const of = ofertaDe(cfg), hoje = hojeSP(), venc = addDias(hoje, 5);
+  const cob = { valor: of.preco_promo, vencimento: venc, competencia: competenciaDe(venc), pix_url: "https://app.rjdomotica.com/" };
+  const c = conteudo(tipo, { nome: nomeTeste || "Cliente Teste" }, tipo === "pre_cadastro" ? null : cob, cfg.nome_empresa || "RJ Domótica", { oferta: of, dias: 3, limite: addDias(venc, 3), desbloqueado: false });
+  const r = await fetch(`https://graph.facebook.com/v21.0/${env("WHATSAPP_PHONE_ID")}/messages`, {
+    method: "POST", headers: { Authorization: "Bearer " + env("WHATSAPP_TOKEN"), "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: fone, type: "template", template: { name: modelo, language: { code: "pt_BR" }, components: [{ type: "body", parameters: c.params.map((t: string) => ({ type: "text", text: String(t || "-") })) }] } }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("A Meta não enviou: " + (d.error?.message || `HTTP ${r.status}`));
+  return { modelo, para: fone };
 }
 
 // ---------------- ações do painel ----------------
@@ -564,6 +597,52 @@ async function acaoAdmin(req: Request) {
       for (const i of insts || []) { const { data: u } = await db.auth.admin.getUserById(i.user_id); out[i.user_id] = { email: u?.user?.email || "", ultimo_acesso: u?.user?.last_sign_in_at || null }; }
       return json({ ok: true, usuarios: out });
     }
+    case "whatsapp_modelos":
+      return json({ ok: true, modelos: await modelosWhatsApp(cfg) });
+    case "whatsapp_teste": {
+      const r = await testeWhatsApp(cfg, String(b.tipo || ""), String(b.telefone || ""), limpa(b.nome, 60));
+      await registrar(null, "whatsapp_teste", `Mensagem de teste (${r.modelo}) enviada para ${r.para}`, autor);
+      return json({ ok: true, ...r });
+    }
+    case "listar_admins": {
+      const { data: ads } = await db.from("admins").select("user_id, nome, created_at").order("created_at");
+      const lista = [];
+      for (const a of ads || []) { const { data: u } = await db.auth.admin.getUserById(a.user_id); lista.push({ ...a, email: u?.user?.email || "", ultimo_acesso: u?.user?.last_sign_in_at || null, voce: a.user_id === user.id }); }
+      return json({ ok: true, admins: lista });
+    }
+    case "convidar_admin": {
+      const email = limpa(b.email, 120).toLowerCase(), nome = limpa(b.nome, 100);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error("E-mail inválido.");
+      if (nome.length < 3) throw new Error("Informe o nome.");
+      const cria = await db.auth.admin.createUser({ email, email_confirm: true, user_metadata: { nome } });
+      if (cria.error && !/already|registered|exists/i.test(cria.error.message)) throw new Error("Não foi possível criar o login: " + cria.error.message);
+      const { link, user_id } = await linkAcessoInstalador(email, URL_ADMIN);
+      const { data: ja } = await db.from("admins").select("user_id").eq("user_id", user_id).maybeSingle();
+      if (ja) throw new Error("Este e-mail já é de um administrador. Use \"Gerar link de acesso\" na lista.");
+      const { error } = await db.from("admins").insert({ user_id, nome });
+      if (error) throw new Error(error.message);
+      await registrar(null, "admin", `Administrador ${nome} (${email}) adicionado`, autor);
+      return json({ ok: true, user_id, link });
+    }
+    case "link_admin": {
+      const { data: a } = await db.from("admins").select("user_id, nome").eq("user_id", b.user_id).maybeSingle();
+      if (!a) throw new Error("Administrador não encontrado.");
+      const { data: u } = await db.auth.admin.getUserById(a.user_id);
+      if (!u?.user?.email) throw new Error("Login não encontrado.");
+      const { link } = await linkAcessoInstalador(u.user.email, URL_ADMIN);
+      await registrar(null, "admin", `Novo link de acesso gerado para ${a.nome || u.user.email}`, autor);
+      return json({ ok: true, link, email: u.user.email });
+    }
+    case "remover_admin": {
+      if (b.user_id === user.id) throw new Error("Você não pode remover a si mesmo.");
+      const { count } = await db.from("admins").select("user_id", { count: "exact", head: true });
+      if ((count || 0) <= 1) throw new Error("É preciso ter pelo menos um administrador.");
+      const { data: a } = await db.from("admins").select("nome").eq("user_id", b.user_id).maybeSingle();
+      if (!a) throw new Error("Administrador não encontrado.");
+      await db.from("admins").delete().eq("user_id", b.user_id);
+      await registrar(null, "admin", `Administrador ${a.nome || b.user_id} removido`, autor);
+      return json({ ok: true });
+    }
     case "rodar_rotina":
       return json({ ok: true, relatorio: await rotina() });
     default:
@@ -578,6 +657,7 @@ Deno.serve(async (req) => {
     if (rota === "admin") return await acaoAdmin(req);
     if (rota === "webhook-mp") return await webhookMP(req);
     if (rota === "pre-cadastro") return await preCadastro(req);
+    if (rota === "oferta") return json({ ok: true, oferta: ofertaDe(await config()) });
     if (rota === "rotina") {
       const { data } = await db.from("segredos_internos").select("valor").eq("chave", "cron").single();
       if (!data || req.headers.get("x-cron-secret") !== data.valor) return json({ erro: "não autorizado" }, 401);

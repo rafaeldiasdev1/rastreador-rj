@@ -192,7 +192,7 @@ nav.barra.esconde{display:none}
       <label class="campo">Senha<input id="l-senha" type="password" autocomplete="current-password" placeholder="••••••••"></label>
     </div>
     <div id="login-demo" class="convite">
-      <div class="data" aria-live="polite"><span class="n" id="cv-n">--</span><span><small>INAUGURAÇÃO DO APP</small><b id="cv-t">04/01/2027</b></span></div>
+      <div class="data" aria-live="polite"><span class="n" id="cv-n">--</span><span><small>INAUGURAÇÃO DO APP</small><b id="cv-t"><span data-of="data_estreia">04/01/2027</span></b></span></div>
       <h2>Em breve, seu carro a um toque de distância.</h2>
       <p id="cv-p">Enquanto o grande dia não chega, <b style="color:var(--tx)">entre e explore</b>. Um veículo de demonstração mostra, ao vivo, tudo o que você vai ter no seu:</p>
       <ul>
@@ -211,8 +211,8 @@ nav.barra.esconde{display:none}
   <div style="padding:22px 0 0">
     <button class="promo" type="button" id="l-precad" aria-label="Fazer pré-cadastro com promoção">
       <b class="orb">PRÉ-CADASTRO · PROMOÇÃO</b>
-      <span class="pr"><s>R$ 64,90</s><strong>R$ 54,90</strong><small>/mês por 12 meses</small></span>
-      <span>Instalação com <b style="color:var(--tx)">50% de desconto</b> (R$ 49,95 em vez de R$ 99,90). Você só paga no ato da instalação. Estreia em 04/01/2027: garanta o seu agora. Toque para fazer seu pré-cadastro →</span>
+      <span class="pr"><s><span data-of="preco_cheio">R$ 64,90</span></s><strong><span data-of="preco_promo">R$ 54,90</span></strong><small>/mês por <span data-of="meses_promo">12</span> meses</small></span>
+      <span>Instalação com <b style="color:var(--tx)"><span data-of="pct_inst">50</span>% de desconto</b> (<span data-of="instalacao_promo">R$ 49,95</span> em vez de <span data-of="instalacao_cheia">R$ 99,90</span>). Você só paga no ato da instalação. Estreia em <span data-of="data_estreia">04/01/2027</span>: garanta o seu agora. Toque para fazer seu pré-cadastro →</span>
     </button>
   </div>
   <p style="text-align:center;margin:18px 0 0"><button type="button" id="l-ajustes" style="background:none;border:0;color:var(--mu);font-size:12px;text-decoration:underline;padding:8px">Ajustes de conexão</button></p>
@@ -224,8 +224,8 @@ nav.barra.esconde{display:none}
     <button class="btn2" type="button" id="pc-voltar" style="height:44px;width:auto;align-self:flex-start;padding:0 16px">← Voltar</button>
     <h1>Pré-cadastro</h1>
     <div class="promo" style="cursor:default"><b class="orb">PROMOÇÃO DO PRÉ-CADASTRO</b>
-      <span class="pr"><s>R$ 64,90</s><strong>R$ 54,90</strong><small>/mês por 12 meses</small></span>
-      <span class="pr" style="margin-top:2px"><s>R$ 99,90</s><strong style="font-size:20px">R$ 49,95</strong><small>instalação · 50% off</small></span>
+      <span class="pr"><s><span data-of="preco_cheio">R$ 64,90</span></s><strong><span data-of="preco_promo">R$ 54,90</span></strong><small>/mês por <span data-of="meses_promo">12</span> meses</small></span>
+      <span class="pr" style="margin-top:2px"><s><span data-of="instalacao_cheia">R$ 99,90</span></s><strong style="font-size:20px"><span data-of="instalacao_promo">R$ 49,95</span></strong><small>instalação · <span data-of="pct_inst">50</span>% off</small></span>
       <span style="margin-top:4px">&#10003; Sem pagar nada agora: o primeiro pagamento é só no ato da instalação do rastreador.<br>&#10003; Depois, a mensalidade promocional vale por 1 ano e segue mês a mês.<br>&#10003; Sem compromisso: entramos em contato pelo WhatsApp para combinar a instalação.</span></div>
   </div>
   <form id="f-precad" class="form" autocomplete="on" novalidate>
@@ -242,7 +242,7 @@ nav.barra.esconde{display:none}
   <div id="pc-ok" class="ok-big" style="display:none">
     <div class="tk" aria-hidden="true">✓</div>
     <h1>Pré-cadastro recebido!</h1>
-    <p class="nota" style="padding:0;font-size:14px;color:#b8bec6">Você garantiu a instalação por <b style="color:var(--tx)">R$ 49,95</b> (50% off) e a mensalidade de <b style="color:var(--tx)">R$ 54,90</b> por 12 meses. O primeiro pagamento só acontece no ato da instalação. O app estreia em 04/01/2027 e, em breve, falamos com você pelo WhatsApp.</p>
+    <p class="nota" style="padding:0;font-size:14px;color:#b8bec6">Você garantiu a instalação por <b style="color:var(--tx)"><span data-of="instalacao_promo">R$ 49,95</span></b> e a mensalidade de <b style="color:var(--tx)"><span data-of="preco_promo">R$ 54,90</span></b> por <span data-of="meses_promo">12</span> meses. O primeiro pagamento só acontece no ato da instalação. O app estreia em <span data-of="data_estreia">04/01/2027</span> e, em breve, falamos com você pelo WhatsApp.</p>
     <button class="btn2" type="button" id="pc-fim" style="width:100%">Voltar ao início</button>
   </div>
 </section>
@@ -1078,12 +1078,28 @@ function rota() {
 }
 window.addEventListener('hashchange', rota);
 
-/* ============ contagem para a inauguração (04/01/2027) ============ */
+/* ============ oferta (preços e estreia vêm do painel admin) ============ */
+let OFERTA = { preco_cheio: 64.9, preco_promo: 54.9, meses_promo: 12, instalacao_cheia: 99.9, instalacao_promo: 49.95, data_estreia: '2027-01-04' };
+const ofBRL = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const ofData = (d) => String(d).slice(0, 10).split('-').reverse().join('/');
+function aplicarOferta() {
+  document.querySelectorAll('[data-of]').forEach((el) => {
+    const k = el.dataset.of, v = OFERTA[k];
+    if (v == null && k !== 'pct_inst') return;
+    if (k === 'pct_inst') { el.textContent = String(Math.round((1 - OFERTA.instalacao_promo / OFERTA.instalacao_cheia) * 100)); return; }
+    el.textContent = k === 'data_estreia' ? ofData(v) : k === 'meses_promo' ? String(v) : ofBRL(v);
+  });
+  contagem();
+}
+fetch('https://xpafmvjlwgmhmvhfsqrg.supabase.co/functions/v1/api/oferta').then((r) => r.json()).then((d) => { if (d && d.oferta) { OFERTA = { ...OFERTA, ...d.oferta }; aplicarOferta(); } }).catch(() => {});
+
+/* ============ contagem para a inauguração ============ */
 function contagem() {
-  const h = new Date(), dias = Math.round((Date.UTC(2027, 0, 4) - Date.UTC(h.getFullYear(), h.getMonth(), h.getDate())) / 864e5);
+  const [ay, am, ad] = String(OFERTA.data_estreia).slice(0, 10).split('-').map(Number), est = ofData(OFERTA.data_estreia);
+  const h = new Date(), dias = Math.round((Date.UTC(ay, am - 1, ad) - Date.UTC(h.getFullYear(), h.getMonth(), h.getDate())) / 864e5);
   const n = $('cv-n'), t = $('cv-t'); if (!n) return;
-  if (dias > 1) { n.textContent = dias; t.textContent = 'dias para a estreia · 04/01/2027'; }
-  else if (dias === 1) { n.textContent = '1'; t.textContent = 'dia para a estreia · 04/01/2027'; }
+  if (dias > 1) { n.textContent = dias; t.textContent = 'dias para a estreia · ' + est; }
+  else if (dias === 1) { n.textContent = '1'; t.textContent = 'dia para a estreia · ' + est; }
   else if (dias === 0) { n.textContent = 'HOJE'; n.style.fontSize = '22px'; t.textContent = 'O app estreia hoje!'; }
   else { n.textContent = '✓'; t.textContent = 'O app já está no ar'; }
 }
