@@ -172,11 +172,15 @@ function conteudo(tipo: string, cli: Obj, cob: Obj | null, empresa: string, extr
     pagamento: { assunto: `${empresa} · Pagamento confirmado`, titulo: "Pagamento confirmado. Obrigado!",
       texto: `Olá, ${nome}! Recebemos o pagamento de ${valor} referente a ${mes}.${extra.desbloqueado ? " Seu acesso ao app já foi liberado." : ""}`,
       params: [nome, mes, valor] },
+    pre_cadastro: { assunto: `${empresa} · Recebemos seu pré-cadastro`, titulo: "Obrigado pelo seu pré-cadastro!",
+      texto: `Olá, ${nome}! Recebemos o seu pré-cadastro no rastreamento ${empresa}. Obrigado pela confiança!<br><br>Assim que iniciarmos o processo de instalação dos rastreadores, entraremos em contato pelo WhatsApp ou por este e-mail para agendar a instalação no seu veículo.<br><br>Sua condição especial já está garantida: <b style="color:#e8eaed">${brl(PRECO_PROMO)}/mês por 12 meses</b> e instalação com 50% de desconto (${brl(49.95)}), paga só no dia da instalação. Não é preciso fazer nada agora.`,
+      params: [nome] },
   };
   return T[tipo];
 }
 function emailHtml(c: Obj, cob: Obj | null, empresa: string, tipo: string) {
   const mostraPagamento = cob && tipo !== "pagamento";
+  const rodape = tipo === "pre_cadastro" ? `${empresa} · Você recebeu esta mensagem porque fez um pré-cadastro no app. Dúvidas? É só responder este e-mail.` : `${empresa} · Mensagem automática. Se já pagou, desconsidere.`;
   const bloco = (rot: string, val: string) => `<tr><td style="padding:6px 0;color:#9aa3ad;font-size:13px">${rot}</td><td style="padding:6px 0;text-align:right;color:#e8eaed;font-size:14px;font-weight:600">${val}</td></tr>`;
   return `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#0b0d10;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b0d10;padding:24px 12px"><tr><td align="center">
@@ -193,7 +197,7 @@ ${mostraPagamento && cob.boleto_url ? `<tr><td style="color:#e8eaed;font-size:15
 ${cob.boleto_codigo ? `<tr><td style="color:#c4cad1;font-size:13px;font-family:monospace;padding-bottom:10px">${cob.boleto_codigo}</td></tr>` : ""}
 <tr><td style="padding-bottom:18px"><a href="${cob.boleto_url}" style="display:inline-block;border:1px solid #38d6f5;color:#38d6f5;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:10px">Ver boleto</a></td></tr>
 <tr><td style="color:#9aa3ad;font-size:12px;padding-bottom:12px">O boleto leva até 2 dias úteis para ser compensado.</td></tr>` : ""}
-<tr><td style="color:#8a929c;font-size:12px;border-top:1px solid #262a31;padding-top:14px">${empresa} · Mensagem automática. Se já pagou, desconsidere.</td></tr>
+<tr><td style="color:#8a929c;font-size:12px;border-top:1px solid #262a31;padding-top:14px">${rodape}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 async function logMsg(cli: Obj, cob: Obj | null, canal: string, tipo: string, destino: string, status: string, detalhe: string) {
@@ -225,7 +229,7 @@ async function notificar(cli: Obj, cob: Obj | null, tipo: string, cfg: Obj, extr
       const d = await r.json().catch(() => ({}));
       await logMsg(cli, cob, "whatsapp", chave, fone, r.ok ? "enviado" : "erro", r.ok ? `modelo ${modelo}` : (d.error?.message || `HTTP ${r.status}`));
     } catch (e) { await logMsg(cli, cob, "whatsapp", chave, fone, "erro", (e as Error).message); }
-  } else await logMsg(cli, cob, "whatsapp", chave, fone, "simulado", c.texto + " (WhatsApp ainda não configurado)");
+  } else await logMsg(cli, cob, "whatsapp", chave, fone, "simulado", c.texto.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ") + " (WhatsApp ainda não configurado)");
 }
 async function jaEnviado(cob: Obj, chave: string) {
   const { count } = await db.from("mensagens").select("id", { count: "exact", head: true }).eq("cobranca_id", cob.id).eq("tipo", chave).in("status", ["enviado", "simulado"]);
@@ -421,6 +425,8 @@ async function preCadastro(req: Request) {
     if (r.error && v.placa) r = await db.from("veiculos").insert({ cliente_id: cli.id, ...v, placa: null, ativo: true }); // placa já existe: grava sem ela
   }
   await registrar(cli.id, "pre_cadastro", `Pré-cadastro recebido pelo app (${veics.length} veículo(s)). Autorizou contato. Promoção ${brl(PRECO_PROMO)}/mês.`, "app");
+  // agradecimento por e-mail e WhatsApp; uma falha aqui nunca derruba o pré-cadastro
+  try { await notificar(cli, null, "pre_cadastro", await config()); } catch (e) { console.error("agradecimento pré-cadastro:", e); }
   return json({ ok: true, valor: PRECO_PROMO });
 }
 
