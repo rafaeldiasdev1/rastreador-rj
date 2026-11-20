@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instalação e OS · RJ Domótica</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="robots" content="noindex">
+<style>
+  :root{--bg:#0b0d10;--sf:#15181d;--sf2:#101317;--ln:#262a31;--tx:#e8eaed;--mu:#9aa3ad;--ci:#38d6f5;--la:#ff8a3d;--vd:#4ade80;--vm:#ff6b6b}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--tx)}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;font-size:14px}
+  a{color:var(--ci)}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 64px}
+  .topo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .topo h1{font-size:22px;margin:0;flex:1;min-width:200px}
+  .btn{height:40px;padding:0 16px;border-radius:12px;border:none;background:var(--ci);color:#0b0d10;font-weight:700;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;font:inherit;font-weight:700;text-decoration:none}
+  .btn2{height:40px;padding:0 14px;border-radius:12px;border:1px solid #333944;background:transparent;color:var(--tx);font:inherit;font-weight:600;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;text-decoration:none}
+  .btn2:hover{border-color:#4a515d}
+  .btn-vm{border-color:rgba(255,107,107,.45);color:var(--vm)}
+  .mini{height:32px;padding:0 10px;font-size:13px}
+  .painel{background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:16px;margin-bottom:16px}
+  .mu{color:var(--mu)}.pq{font-size:12px}
+  .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid}
+  .b-ok{color:var(--vd);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.08)}
+  .b-ci{color:var(--ci);border-color:rgba(56,214,245,.4);background:rgba(56,214,245,.08)}
+  .b-la{color:var(--la);border-color:rgba(255,138,61,.4);background:rgba(255,138,61,.08)}
+  .b-vm{color:var(--vm);border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+  .b-mu{color:var(--mu);border-color:#333944}
+  .veic-h{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .veic-h h2{font-size:17px;margin:0;flex:1}
+  .os{border:1px solid var(--ln);border-radius:12px;margin-top:10px;background:var(--sf2)}
+  .os>summary{list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px}
+  .os>summary::-webkit-details-marker{display:none}
+  .os>summary b{min-width:84px}
+  .os .corpo{padding:0 14px 14px;border-top:1px solid var(--ln)}
+  dl.info{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:14px 0}
+  dl.info dt{color:var(--mu)}dl.info dd{margin:0}
+  .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:8px}
+  .foto{border:1px solid var(--ln);border-radius:10px;overflow:hidden;background:var(--sf)}
+  .foto a.img{display:block;aspect-ratio:4/3;background:#000}
+  .foto img{width:100%;height:100%;object-fit:cover;display:block}
+  .foto .tx{padding:8px 10px}
+  .foto .tx b{display:block;font-size:13px}
+  .foto.falta{display:grid;place-items:center;min-height:120px;color:var(--vm);font-size:13px;text-align:center;padding:10px;border-style:dashed}
+  .ass{background:#fff;border-radius:10px;max-width:360px;width:100%;display:block}
+  .obs{white-space:pre-wrap;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;margin:6px 0 0}
+  h3{font-size:14px;margin:16px 0 4px}
+  .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  select,input,textarea{background:#0f1216;border:1px solid var(--ln);color:var(--tx);border-radius:10px;padding:8px 10px;font:inherit}
+  textarea{width:100%;min-height:70px}
+  .nova{display:none;margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-start}
+  .nova.aberta{display:flex}
+  .vazio{padding:14px;border:1px dashed var(--ln);border-radius:12px;color:var(--mu);margin-top:10px}
+  .toast{position:fixed;right:18px;bottom:18px;z-index:80;background:var(--sf);border:1px solid rgba(56,214,245,.5);border-radius:14px;padding:12px 16px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translateY(150%);transition:transform .25s}
+  .toast.ver{transform:none}.toast.er{border-color:rgba(255,107,107,.6)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo">
+    <a class="btn2" href="./" id="voltar">‹ Painel</a>
+    <h1 id="titulo">Instalação e ordens de serviço</h1>
+  </div>
+  <div id="conteudo"><p class="mu">Carregando…</p></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var sb = supabase.createClient("https://xpafmvjlwgmhmvhfsqrg.supabase.co", "sb_publishable_78XLEJvUXYmVjzEzfEiz6Q_l3c5EiTw");
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  var dt = function (d) { return d ? new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"; };
+  var brl = function (v) { return v == null ? "—" : Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); };
+  var mapa = function (lat, lng) { return lat == null ? "" : '<a href="https://www.google.com/maps?q=' + lat + "," + lng + '" target="_blank" rel="noopener">' + Number(lat).toFixed(5) + ", " + Number(lng).toFixed(5) + "</a>"; };
+  function toast(t, erro) { var e = $("#toast"); e.textContent = t; e.classList.toggle("er", !!erro); e.classList.add("ver"); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove("ver"); }, 4000); }
+
+  var TIPO = { instalacao: "Instalação", manutencao: "Manutenção", retirada: "Retirada" };
+  var STATUS = { aberta: ["Aberta", "b-mu"], em_execucao: ["Em execução", "b-ci"], concluida: ["Concluída", "b-ok"], reprovada: ["Reprovada", "b-vm"], cancelada: ["Cancelada", "b-mu"] };
+  var PAG = { pendente: ["Pagamento pendente", "b-mu"], liberado: ["Pagamento liberado", "b-la"], pago: ["Pago", "b-ok"], bloqueado: ["Pagamento bloqueado", "b-vm"] };
+  var FOTOS = [["rastreador_imei", "Rastreador com IMEI"], ["local_acomodacao", "Local de acomodação"], ["bomba_solda", "Emenda da bomba soldada"],
+               ["bomba_isolada", "Emenda isolada"], ["local_afastada", "Foto afastada do esconderijo"]];
+  var badge = function (m, k) { var x = m[k] || [k, "b-mu"]; return '<span class="badge ' + x[1] + '">' + esc(x[0]) + "</span>"; };
+
+  var clienteId = new URLSearchParams(location.search).get("cliente");
+  var dados = null;
+
+  async function urlAssinada(path) { if (!path) return null; var r = await sb.storage.from("instalacoes").createSignedUrl(path, 3600); return r.data && r.data.signedUrl; }
+
+  async function carregar() {
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s) { $("#conteudo").innerHTML = '<div class="painel">Sessão expirada. <a href="./">Entre no painel</a> e abra o cliente de novo.</div>'; return; }
+    if (!clienteId) { $("#conteudo").innerHTML = '<div class="painel">Cliente não informado.</div>'; return; }
+    var r = await sb.rpc("admin_os_do_cliente", { p_cliente: clienteId });
+    if (r.error) { $("#conteudo").innerHTML = '<div class="painel"></div>'; $("#conteudo .painel").textContent = r.error.message; return; }
+    dados = r.data;
+    $("#titulo").textContent = "Instalação e OS · " + (dados.cliente ? dados.cliente.nome : "");
+    document.title = "Instalação e OS · " + (dados.cliente ? dados.cliente.nome : "");
+    render();
+  }
+
+  function render() {
+    var c = $("#conteudo");
+    if (!dados.veiculos.length) { c.innerHTML = '<div class="painel mu">Este cliente ainda não tem veículos cadastrados.</div>'; return; }
+    var opts = dados.instaladores.map(function (i) { return '<option value="' + i.user_id + '">' + esc(i.nome) + "</option>"; }).join("");
+    c.innerHTML = dados.veiculos.map(function (v) {
+      var inst = v.ordens.filter(function (o) { return o.tipo === "instalacao" && o.status === "concluida"; })[0];
+      return '<section class="painel" data-v="' + v.id + '">' +
+        '<div class="veic-h"><h2>' + esc([v.marca, v.modelo, v.ano].filter(Boolean).join(" ")) + ' <span class="mu">· ' + esc(v.placa || "sem placa") + "</span></h2>" +
+        (inst ? '<span class="badge b-ok">Instalado em ' + esc(dt(inst.concluida_em)) + "</span>" : '<span class="badge b-la">Instalação não concluída</span>') +
+        '<button class="btn2 mini" data-acao="nova">+ Nova OS</button></div>' +
+        '<div class="mu pq">IMEI ' + esc(v.imei || "—") + " · " + v.ordens.length + " ordem(ns) de serviço</div>" +
+        '<div class="nova"><select data-campo="tipo"><option value="manutencao">Manutenção</option><option value="retirada">Retirada</option><option value="instalacao">Instalação</option></select>' +
+        '<select data-campo="inst"><option value="">Sem técnico (quem abrir primeiro)</option>' + opts + "</select>" +
+        '<input data-campo="valor" type="number" min="0" step="0.01" placeholder="Valor do técnico (R$)" style="width:180px">' +
+        '<textarea data-campo="desc" placeholder="O que deve ser feito (ex.: rastreador offline, verificar alimentação)"></textarea>' +
+        '<button class="btn mini" data-acao="criar">Criar OS</button></div>' +
+        (v.ordens.length ? v.ordens.map(function (o) { return osHtml(o, opts); }).join("") : '<div class="vazio">Nenhuma ordem de serviço para este veículo.</div>') +
+        "</section>";
+    }).join("");
+    c.querySelectorAll("details.os").forEach(function (d) { d.addEventListener("toggle", function () { if (d.open) carregarImagens(d); }); });
+    var primeira = c.querySelector("details.os"); if (primeira) { primeira.open = true; }
+  }
+
+  function osHtml(o, opts) {
+    var fotos = FOTOS.map(function (f) {
+      var reg = o.fotos.filter(function (x) { return x.tipo === f[0]; })[0];
+      if (!reg) return o.tipo === "instalacao" ? '<div class="foto falta">Falta: ' + esc(f[1]) + "</div>" : "";
+      return '<div class="foto"><a class="img" target="_blank" rel="noopener" data-path="' + esc(reg.path) + '"><img alt="' + esc(f[1]) + '"></a>' +
+        '<div class="tx"><b>' + esc(f[1]) + "</b>" + esc(reg.descricao) + '<div class="mu pq">' + esc(dt(reg.enviada_em)) + " · " + mapa(reg.latitude, reg.longitude) +
+        (reg.precisao_m ? " (±" + Math.round(reg.precisao_m) + " m)" : "") + "</div></div></div>";
+    }).join("");
+    var podeAtribuir = ["aberta", "em_execucao", "reprovada"].indexOf(o.status) >= 0;
+    return '<details class="os" data-os="' + o.id + '"><summary><b>OS ' + o.numero + "</b>" +
+      '<span class="badge b-ci">' + esc(TIPO[o.tipo] || o.tipo) + "</span>" + badge(STATUS, o.status) +
+      (o.status === "concluida" || o.status === "reprovada" ? badge(PAG, o.pagamento_status) : "") +
+      '<span class="mu" style="flex:1;min-width:160px">' + esc(o.tecnico || "sem técnico") + " · " + esc(dt(o.concluida_em || o.criada_em)) + "</span></summary>" +
+      '<div class="corpo"><dl class="info">' +
+        "<dt>Número da OS</dt><dd>" + o.numero + "</dd>" +
+        "<dt>Técnico</dt><dd>" + esc(o.tecnico || "—") + (o.tecnico_whatsapp ? ' · <a href="https://wa.me/' + esc(String(o.tecnico_whatsapp).replace(/\D/g, "")) + '" target="_blank" rel="noopener">WhatsApp</a>' : "") + "</dd>" +
+        (o.descricao_servico ? "<dt>Serviço pedido</dt><dd>" + esc(o.descricao_servico) + "</dd>" : "") +
+        "<dt>Aberta em</dt><dd>" + esc(dt(o.criada_em)) + "</dd>" +
+        "<dt>Iniciada em</dt><dd>" + esc(dt(o.iniciada_em)) + "</dd>" +
+        "<dt>Concluída em</dt><dd>" + esc(dt(o.concluida_em)) + "</dd>" +
+        "<dt>Responsável pelo veículo</dt><dd>" + esc(o.responsavel_nome || "—") + (o.responsavel_documento ? ' <span class="mu">· ' + esc(o.responsavel_documento) + "</span>" : "") + "</dd>" +
+        "<dt>Valor do técnico</dt><dd>" + brl(o.valor_instalador) + (o.pago_em ? ' <span class="mu">· pago em ' + esc(dt(o.pago_em)) + "</span>" : "") + "</dd>" +
+        (o.motivo_reprovacao ? '<dt>Motivo da reprovação</dt><dd style="color:var(--vm)">' + esc(o.motivo_reprovacao) + "</dd>" : "") +
+      "</dl>" +
+      "<h3>Fotos</h3>" + (fotos ? '<div class="fotos">' + fotos + "</div>" : '<div class="mu">Nenhuma foto enviada.</div>') +
+      "<h3>Observações do instalador</h3>" + (o.observacoes_finais ? '<div class="obs">' + esc(o.observacoes_finais) + "</div>" : '<div class="mu">—</div>') +
+      "<h3>Assinatura do responsável</h3>" + (o.assinatura_path ? '<img class="ass" data-path="' + esc(o.assinatura_path) + '" alt="Assinatura de ' + esc(o.responsavel_nome || "") + '"><div class="mu pq">Coletada em ' + mapa(o.assinatura_lat, o.assinatura_lng) + "</div>" : '<div class="mu">—</div>') +
+      '<div class="acoes">' +
+        (podeAtribuir ? '<select data-campo="atrib"><option value="">Atribuir técnico…</option>' + opts + "</select>" : "") +
+        (o.status === "concluida" ? '<button class="btn2 mini btn-vm" data-acao="reprovar">Reprovar</button>' : "") +
+        (o.pagamento_status === "liberado" ? '<button class="btn mini" data-acao="pagar">Marcar como pago</button>' : "") +
+      "</div></div></details>";
+  }
+
+  async function carregarImagens(d) {
+    var els = d.querySelectorAll("[data-path]:not([data-ok])");
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], u = await urlAssinada(el.dataset.path); if (!u) continue;
+      el.dataset.ok = "1";
+      if (el.tagName === "A") { el.href = u; el.querySelector("img").src = u; } else el.src = u;
+    }
+  }
+
+  function acharOS(id) { for (var v of dados.veiculos) for (var o of v.ordens) if (o.id === id) return o; }
+
+  document.addEventListener("click", async function (ev) {
+    var b = ev.target.closest("[data-acao]"); if (!b) return;
+    var sec = b.closest("[data-v]"), det = b.closest("[data-os]"), acao = b.dataset.acao, r;
+    try {
+      if (acao === "nova") { $(".nova", sec).classList.toggle("aberta"); return; }
+      b.disabled = true;
+      if (acao === "criar") {
+        var n = $(".nova", sec);
+        r = await sb.rpc("os_criar", { p_veiculo: sec.dataset.v, p_tipo: $("[data-campo=tipo]", n).value, p_descricao: $("[data-campo=desc]", n).value,
+          p_instalador: $("[data-campo=inst]", n).value || null, p_valor: $("[data-campo=valor]", n).value ? Number($("[data-campo=valor]", n).value) : null });
+        if (r.error) throw r.error; toast("OS " + r.data + " criada. Passe esse número ao técnico.");
+      } else if (acao === "reprovar") {
+        var motivo = prompt("Motivo da reprovação (o técnico vai ver este texto):"); if (!motivo) { b.disabled = false; return; }
+        r = await sb.rpc("os_reprovar", { p_os: det.dataset.os, p_motivo: motivo }); if (r.error) throw r.error; toast("OS reprovada. Pagamento bloqueado até a correção.");
+      } else if (acao === "pagar") {
+        var o = acharOS(det.dataset.os);
+        if (!confirm("Confirmar pagamento de " + brl(o.valor_instalador) + " a " + (o.tecnico || "técnico") + " pela OS " + o.numero + "?")) { b.disabled = false; return; }
+        r = await sb.rpc("os_marcar_pago", { p_os: det.dataset.os }); if (r.error) throw r.error; toast("OS marcada como paga.");
+      }
+      await carregar();
+    } catch (e) { b.disabled = false; toast(e.message || String(e), true); }
+  });
+
+  document.addEventListener("change", async function (ev) {
+    var s = ev.target.closest("[data-campo=atrib]"); if (!s || !s.value) return;
+    var r = await sb.rpc("os_atribuir", { p_os: s.closest("[data-os]").dataset.os, p_instalador: s.value });
+    if (r.error) return toast(r.error.message, true);
+    toast("Técnico atribuído."); carregar();
+  });
+
+  carregar();
+})();
+</script>
+</body>
+</html>
