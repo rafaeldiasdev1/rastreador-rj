@@ -80,7 +80,7 @@
 
   var TIPO = { instalacao: "Instalação", manutencao: "Manutenção", retirada: "Retirada" };
   var STATUS = { aberta: ["Aberta", "b-mu"], em_execucao: ["Em execução", "b-ci"], concluida: ["Concluída", "b-ok"], reprovada: ["Reprovada", "b-vm"], cancelada: ["Cancelada", "b-mu"] };
-  var PAG = { pendente: ["Pagamento pendente", "b-mu"], liberado: ["Pagamento liberado", "b-la"], pago: ["Pago", "b-ok"], bloqueado: ["Pagamento bloqueado", "b-vm"] };
+  var PAG = { pendente: ["Pagamento pendente", "b-mu"], aguardando: ["Aguardando aprovação", "b-la"], liberado: ["Pagamento liberado", "b-ok"], pago: ["Pago", "b-ok"], bloqueado: ["Pagamento bloqueado", "b-vm"] };
   var FOTOS = [["rastreador_imei", "Rastreador com IMEI"], ["local_acomodacao", "Local de acomodação"], ["bomba_solda", "Emenda da bomba soldada"],
                ["bomba_isolada", "Emenda isolada"], ["local_afastada", "Foto afastada do esconderijo"]];
   var badge = function (m, k) { var x = m[k] || [k, "b-mu"]; return '<span class="badge ' + x[1] + '">' + esc(x[0]) + "</span>"; };
@@ -121,8 +121,8 @@
         (v.ordens.length ? v.ordens.map(function (o) { return osHtml(o, opts); }).join("") : '<div class="vazio">Nenhuma ordem de serviço para este veículo.</div>') +
         "</section>";
     }).join("");
-    c.querySelectorAll("details.os").forEach(function (d) { d.addEventListener("toggle", function () { if (d.open) carregarImagens(d); }); });
-    var primeira = c.querySelector("details.os"); if (primeira) { primeira.open = true; }
+    c.querySelectorAll("details.os").forEach(function (d) { d.addEventListener("toggle", function () { if (d.open) { carregarImagens(d); conferirDistancia(d); } }); });
+    var primeira = c.querySelector("details.os"); if (primeira) { primeira.open = true; conferirDistancia(primeira); }
   }
 
   function osHtml(o, opts) {
@@ -136,7 +136,7 @@
     var podeAtribuir = ["aberta", "em_execucao", "reprovada"].indexOf(o.status) >= 0;
     return '<details class="os" data-os="' + o.id + '"><summary><b>OS ' + o.numero + "</b>" +
       '<span class="badge b-ci">' + esc(TIPO[o.tipo] || o.tipo) + "</span>" + badge(STATUS, o.status) +
-      (o.status === "concluida" || o.status === "reprovada" ? badge(PAG, o.pagamento_status) : "") +
+      (o.status === "concluida" || o.status === "reprovada" ? badge(PAG, o.status === "concluida" && o.pagamento_status === "pendente" ? "aguardando" : o.pagamento_status) : "") +
       '<span class="mu" style="flex:1;min-width:160px">' + esc(o.tecnico || "sem técnico") + " · " + esc(dt(o.concluida_em || o.criada_em)) + "</span></summary>" +
       '<div class="corpo"><dl class="info">' +
         "<dt>Número da OS</dt><dd>" + o.numero + "</dd>" +
@@ -144,7 +144,10 @@
         (o.descricao_servico ? "<dt>Serviço pedido</dt><dd>" + esc(o.descricao_servico) + "</dd>" : "") +
         "<dt>Aberta em</dt><dd>" + esc(dt(o.criada_em)) + "</dd>" +
         "<dt>Iniciada em</dt><dd>" + esc(dt(o.iniciada_em)) + "</dd>" +
-        "<dt>Concluída em</dt><dd>" + esc(dt(o.concluida_em)) + "</dd>" +
+        "<dt>Concluída em</dt><dd>" + esc(dt(o.concluida_em)) + (antesDaData(o) ? ' <span class="badge b-vm">antes da data agendada</span>' : "") + "</dd>" +
+        (o.agendada_para ? "<dt>Visita agendada</dt><dd>" + esc(dt(o.agendada_para)) + "</dd>" : "") +
+        "<dt>Endereço da visita</dt><dd>" + esc(o.endereco_visita || (dados.cliente && dados.cliente.endereco) || "—") + '<div class="mu pq dist" data-dist="' + o.id + '"></div></dd>' +
+        (o.aprovada_em ? "<dt>Aprovada em</dt><dd>" + esc(dt(o.aprovada_em)) + "</dd>" : "") +
         "<dt>Responsável pelo veículo</dt><dd>" + esc(o.responsavel_nome || "—") + (o.responsavel_documento ? ' <span class="mu">· ' + esc(o.responsavel_documento) + "</span>" : "") + "</dd>" +
         "<dt>Valor do técnico</dt><dd>" + brl(o.valor_instalador) + (o.pago_em ? ' <span class="mu">· pago em ' + esc(dt(o.pago_em)) + "</span>" : "") + "</dd>" +
         (o.motivo_reprovacao ? '<dt>Motivo da reprovação</dt><dd style="color:var(--vm)">' + esc(o.motivo_reprovacao) + "</dd>" : "") +
@@ -154,6 +157,7 @@
       "<h3>Assinatura do responsável</h3>" + (o.assinatura_path ? '<img class="ass" data-path="' + esc(o.assinatura_path) + '" alt="Assinatura de ' + esc(o.responsavel_nome || "") + '"><div class="mu pq">Coletada em ' + mapa(o.assinatura_lat, o.assinatura_lng) + "</div>" : '<div class="mu">—</div>') +
       '<div class="acoes">' +
         (podeAtribuir ? '<select data-campo="atrib"><option value="">Atribuir técnico…</option>' + opts + "</select>" : "") +
+        (o.status === "concluida" && o.pagamento_status === "pendente" ? '<button class="btn mini" data-acao="aprovar">Aprovar e liberar pagamento</button>' : "") +
         (o.status === "concluida" ? '<button class="btn2 mini btn-vm" data-acao="reprovar">Reprovar</button>' : "") +
         (o.pagamento_status === "liberado" ? '<button class="btn mini" data-acao="pagar">Marcar como pago</button>' : "") +
       "</div></div></details>";
@@ -166,6 +170,39 @@
       el.dataset.ok = "1";
       if (el.tagName === "A") { el.href = u; el.querySelector("img").src = u; } else el.src = u;
     }
+  }
+
+  // ── Conferência: OS concluída antes do dia agendado ──
+  function diaSP(d) { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date(d)); }
+  function antesDaData(o) { return !!(o.agendada_para && o.concluida_em && diaSP(o.concluida_em) < diaSP(o.agendada_para)); }
+
+  // ── Conferência: distância entre as fotos e o endereço da visita ──
+  var LIMITE_M = 500, geoCache = {};
+  function distM(a, b, c, d) { var R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r;
+    var h = Math.sin(x / 2) * Math.sin(x / 2) + Math.cos(a * r) * Math.cos(c * r) * Math.sin(y / 2) * Math.sin(y / 2);
+    return 2 * R * Math.asin(Math.sqrt(h)); }
+  function fmtDist(m) { return m < 1000 ? Math.round(m) + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km"; }
+  async function geocodificar(end) {
+    if (geoCache[end] !== undefined) return geoCache[end];
+    try {
+      var q = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=" + encodeURIComponent(end.replace(/·/g, ",")), { headers: { "Accept-Language": "pt-BR" } });
+      var j = await q.json(); geoCache[end] = j && j[0] ? { lat: +j[0].lat, lng: +j[0].lon } : null;
+    } catch (e) { geoCache[end] = null; }
+    return geoCache[end];
+  }
+  async function conferirDistancia(d) {
+    var alvo = d.querySelector("[data-dist]"); if (!alvo || alvo.dataset.feito) return; alvo.dataset.feito = "1";
+    var o = acharOS(d.dataset.os), end = o.endereco_visita || (dados.cliente && dados.cliente.endereco);
+    var pts = o.fotos.map(function (f) { return [f.latitude, f.longitude]; });
+    if (o.assinatura_lat != null) pts.push([o.assinatura_lat, o.assinatura_lng]);
+    if (!end || !pts.length) return;
+    alvo.textContent = "Conferindo a distância das fotos…";
+    var g = await geocodificar(end);
+    if (!g) { alvo.textContent = "Não foi possível localizar este endereço no mapa para conferir a distância."; return; }
+    var maior = Math.max.apply(null, pts.map(function (p) { return distM(g.lat, g.lng, p[0], p[1]); }));
+    alvo.innerHTML = maior > LIMITE_M
+      ? '<span class="badge b-vm">Atenção</span> Foto ou assinatura a ' + fmtDist(maior) + " do endereço da visita. Confira antes de aprovar."
+      : '<span class="badge b-ok">OK</span> Fotos e assinatura a até ' + fmtDist(maior) + " do endereço.";
   }
 
   function acharOS(id) { for (var v of dados.veiculos) for (var o of v.ordens) if (o.id === id) return o; }
@@ -184,6 +221,10 @@
       } else if (acao === "reprovar") {
         var motivo = prompt("Motivo da reprovação (o técnico vai ver este texto):"); if (!motivo) { b.disabled = false; return; }
         r = await sb.rpc("os_reprovar", { p_os: det.dataset.os, p_motivo: motivo }); if (r.error) throw r.error; toast("OS reprovada. Pagamento bloqueado até a correção.");
+      } else if (acao === "aprovar") {
+        var oa = acharOS(det.dataset.os);
+        if (!confirm("Conferiu as fotos e a localização? Aprovar a OS " + oa.numero + " libera o pagamento de " + brl(oa.valor_instalador) + " ao técnico.")) { b.disabled = false; return; }
+        r = await sb.rpc("os_aprovar", { p_os: det.dataset.os }); if (r.error) throw r.error; toast("OS aprovada. Pagamento liberado.");
       } else if (acao === "pagar") {
         var o = acharOS(det.dataset.os);
         if (!confirm("Confirmar pagamento de " + brl(o.valor_instalador) + " a " + (o.tecnico || "técnico") + " pela OS " + o.numero + "?")) { b.disabled = false; return; }

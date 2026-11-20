@@ -217,6 +217,7 @@ function statusCob(c) {
 }
 const fmtFone = (f) => { const d = so(f).replace(/^55/, ''); return d.length === 11 ? '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7) : d.length === 10 ? '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6) : f || '—'; };
 const fmtDoc = (d) => { d = so(d); return d.length === 11 ? d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : d.length === 14 ? d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') : d; };
+function imeiValido(c) { c = so(c); if (!/^\d{15}$/.test(c)) return false; let s = 0; for (let i = 0; i < 15; i++) { let d = +c[i]; if (i % 2) { d *= 2; if (d > 9) d -= 9; } s += d; } return s % 10 === 0; }
 function cpfValido(c) { c = so(c); if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false; for (let t = 9; t < 11; t++) { let s = 0; for (let i = 0; i < t; i++) s += c[i] * (t + 1 - i); if (((10 * s) % 11) % 10 != c[t]) return false; } return true; }
 function cnpjValido(c) { c = so(c); if (c.length !== 14 || /^(\d)\1+$/.test(c)) return false; const calc = (n) => { let s = 0, p = n - 7; for (let i = 0; i < n; i++) { s += c[i] * p--; if (p < 2) p = 9; } const r = s % 11; return r < 2 ? 0 : 11 - r; }; return calc(12) == c[12] && calc(13) == c[13]; }
 function gerarSenha() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'; const v = crypto.getRandomValues(new Uint32Array(10)); return [...v].map((x) => a[x % a.length]).join(''); }
@@ -524,7 +525,7 @@ function formVeiculo(cli, v) {
     const placa = (x.placa || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!x.marca.trim() || !x.modelo.trim()) return err.textContent = 'Informe marca e modelo.';
     if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa)) return err.textContent = 'Placa inválida. Use o formato ABC1D23 ou ABC1234.';
-    const imei = so(x.imei); if (imei && (imei.length < 14 || imei.length > 17)) return err.textContent = 'IMEI inválido.';
+    const imei = so(x.imei); if (imei && !imeiValido(imei)) return err.textContent = 'IMEI inválido: confira os 15 números da etiqueta do rastreador (o último é dígito verificador).';
     let chip = so(x.chip_numero); if (chip.length === 10 || chip.length === 11) chip = '55' + chip;
     const iccid = so(x.chip_iccid); if (iccid && !/^89\d{16,20}$/.test(iccid)) return err.textContent = 'ICCID inválido: são 18 a 22 dígitos começando com 89 (impresso no chip).';
     const dados = { cliente_id: cli.id, tipo: x.tipo || 'carro', marca: x.marca.trim(), modelo: x.modelo.trim(), placa, ano: x.ano ? Number(x.ano) : null, cor: x.cor || null, ativo: x.ativo === '1', modelo_rastreador: x.modelo_rastreador || null, imei: imei || null, chip_numero: chip || null, chip_operadora: x.chip_operadora || null, chip_iccid: iccid || null, escuta: !!x.escuta };
@@ -579,6 +580,9 @@ async function telaMensagens() {
 const TIPOS_OS = { instalacao: 'Instalação', manutencao: 'Manutenção / reparo', retirada: 'Retirada' };
 const STATUS_OS = { aberta: ['Agendada / aberta', 'b-ci'], em_execucao: ['Em execução', 'b-la'], concluida: ['Concluída', 'b-ok'], reprovada: ['Reprovada', 'b-vm'], cancelada: ['Cancelada', 'b-mu'] };
 const PAG_OS = { pendente: 'Pagamento pendente', liberado: 'Pagamento liberado', bloqueado: 'Pagamento bloqueado', pago: 'Pago ao técnico' };
+const pagOS = (o) => o.status === 'concluida' && o.pagamento_status === 'pendente' ? 'Aguardando aprovação' : (PAG_OS[o.pagamento_status] || '');
+// Data de referência na agenda: a OS concluída aparece no dia em que foi feita; as demais, no dia agendado
+const refOS = (o) => (o.status === 'concluida' && o.concluida_em) ? o.concluida_em : o.agendada_para;
 const TZ = 'America/Sao_Paulo';
 const diaDe = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(d));
 const horaDe = (d) => new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(new Date(d));
@@ -597,10 +601,10 @@ async function telaOS() {
   if (!$('#b-nova-os')) return;
   const ativas = lista.filter((o) => o.agendada_para && !['cancelada', 'concluida'].includes(o.status));
   const hj = hoje();
-  const deHoje = ativas.filter((o) => diaDe(o.agendada_para) === hj).sort((a, b) => a.agendada_para.localeCompare(b.agendada_para));
+  const deHoje = lista.filter((o) => o.status !== 'cancelada' && refOS(o) && diaDe(refOS(o)) === hj).sort((a, b) => refOS(a).localeCompare(refOS(b)));
   const futuras = ativas.filter((o) => diaDe(o.agendada_para) > hj).sort((a, b) => a.agendada_para.localeCompare(b.agendada_para)).slice(0, 15);
   const semData = lista.filter((o) => !o.agendada_para && !['cancelada', 'concluida'].includes(o.status));
-  const itemAgenda = (o, comDia) => `<div class="ag-item" data-os="${o.id}"><div class="ag-hora">${comDia ? dataBR(diaDe(o.agendada_para)).slice(0, 5) + '<br>' : ''}${horaDe(o.agendada_para)}</div><div style="flex:1;min-width:0"><b>${esc(o.clientes?.nome || '')}</b> <span class="mu pq">OS ${o.numero} · ${esc(TIPOS_OS[o.tipo] || o.tipo)}</span><div class="mu pq" style="overflow:hidden;text-overflow:ellipsis">${esc(o.endereco_visita || enderecoCliente(o.clientes) || 'Endereço não informado')}${o.instaladores ? ' · ' + esc(o.instaladores.nome) : ' · <span style="color:var(--la)">sem técnico</span>'}</div></div></div>`;
+  const itemAgenda = (o, comDia) => `<div class="ag-item" data-os="${o.id}"><div class="ag-hora">${comDia ? dataBR(diaDe(refOS(o))).slice(0, 5) + '<br>' : ''}${horaDe(refOS(o))}</div><div style="flex:1;min-width:0"><b>${esc(o.clientes?.nome || '')}</b> <span class="mu pq">OS ${o.numero} · ${esc(TIPOS_OS[o.tipo] || o.tipo)}</span>${o.status === 'concluida' ? ` <span class="badge b-ok">Concluída</span>${o.pagamento_status === 'pendente' ? ' <span class="badge b-la">Aguardando aprovação</span>' : ''}` : ''}<div class="mu pq" style="overflow:hidden;text-overflow:ellipsis">${esc(o.endereco_visita || enderecoCliente(o.clientes) || 'Endereço não informado')}${o.instaladores ? ' · ' + esc(o.instaladores.nome) : ' · <span style="color:var(--la)">sem técnico</span>'}</div></div></div>`;
   m.innerHTML = `<div class="cab"><h1>Ordens de serviço</h1><button class="btn" id="b-nova-os">+ Nova OS</button></div>
   <div class="grid2">
     <div class="painel"><h2>Visitas de hoje <span class="mu pq">${dataBR(hj)}</span></h2>${deHoje.length ? deHoje.map((o) => itemAgenda(o)).join('') : '<div class="mu pq" style="padding:8px 0">Nenhuma visita marcada para hoje.</div>'}
@@ -622,16 +626,16 @@ async function telaOS() {
     const [a, mm] = OS_CAL.split('-').map(Number), primeiro = new Date(Date.UTC(a, mm - 1, 1)), dias = new Date(Date.UTC(a, mm, 0)).getUTCDate();
     $('#cal-mes').textContent = primeiro.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
     const porDia = {};
-    lista.filter((o) => o.agendada_para && o.status !== 'cancelada').forEach((o) => { const d = diaDe(o.agendada_para); (porDia[d] = porDia[d] || []).push(o); });
+    lista.filter((o) => refOS(o) && o.status !== 'cancelada').forEach((o) => { const d = diaDe(refOS(o)); (porDia[d] = porDia[d] || []).push(o); });
     let h = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => `<div class="cal-cab">${d}</div>`).join('');
     for (let i = 0; i < primeiro.getUTCDay(); i++) h += '<div></div>';
     for (let d = 1; d <= dias; d++) {
-      const k = OS_CAL + '-' + String(d).padStart(2, '0'), it = (porDia[k] || []).sort((x, y) => x.agendada_para.localeCompare(y.agendada_para));
-      h += `<button class="cal-dia${k === hj ? ' hoje' : ''}${k === OS_DIA ? ' sel' : ''}" data-dia="${k}"><span>${d}</span>${it.slice(0, 3).map((o) => `<i class="${o.status === 'concluida' ? 'ok' : ''}">${horaDe(o.agendada_para)} ${esc((o.clientes?.nome || '').split(' ')[0])}</i>`).join('')}${it.length > 3 ? `<i>+${it.length - 3}</i>` : ''}</button>`;
+      const k = OS_CAL + '-' + String(d).padStart(2, '0'), it = (porDia[k] || []).sort((x, y) => refOS(x).localeCompare(refOS(y)));
+      h += `<button class="cal-dia${k === hj ? ' hoje' : ''}${k === OS_DIA ? ' sel' : ''}" data-dia="${k}"><span>${d}</span>${it.slice(0, 3).map((o) => `<i class="${o.status === 'concluida' ? 'ok' : ''}">${horaDe(refOS(o))} ${esc((o.clientes?.nome || '').split(' ')[0])}</i>`).join('')}${it.length > 3 ? `<i>+${it.length - 3}</i>` : ''}</button>`;
     }
     $('#cal').innerHTML = h;
     $$('.cal-dia').forEach((b) => b.onclick = () => { OS_DIA = b.dataset.dia; desenharCal(); });
-    const doDia = (porDia[OS_DIA] || []).sort((x, y) => x.agendada_para.localeCompare(y.agendada_para));
+    const doDia = (porDia[OS_DIA] || []).sort((x, y) => refOS(x).localeCompare(refOS(y)));
     $('#cal-dia').innerHTML = `<div class="sec" style="margin-top:0">VISITAS DE ${dataBR(OS_DIA)}</div>${doDia.length ? doDia.map((o) => itemAgenda(o)).join('') : '<div class="mu pq">Nenhuma visita neste dia.</div>'}<button class="btn2 mini" id="b-os-dia" style="margin-top:8px">+ Agendar neste dia</button>`;
     $$('#cal-dia .ag-item').forEach((el) => el.onclick = () => formOS(lista.find((o) => o.id === el.dataset.os)));
     $('#b-os-dia').onclick = () => formOS(null, { dia: OS_DIA });
@@ -655,7 +659,7 @@ async function telaOS() {
   const desenharLista = () => {
     $('#f-mes').disabled = !OS_FILTRO.mes;
     const l = filtradas();
-    $('#os-lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Nº</th><th>Tipo</th><th>Cliente</th><th>Veículo</th><th>Visita</th><th>Técnico</th><th>Situação</th></tr></thead><tbody>${l.map((o) => `<tr class="click" data-os="${o.id}"><td><b>${o.numero}</b></td><td>${esc(TIPOS_OS[o.tipo] || o.tipo)}</td><td>${esc(o.clientes?.nome || '')}<div class="mu pq">${esc(o.endereco_visita || enderecoCliente(o.clientes))}</div></td><td>${o.veiculos ? esc(o.veiculos.marca + ' ' + o.veiculos.modelo) + '<div class="mu pq">' + esc(o.veiculos.placa || '') + '</div>' : '—'}</td><td style="white-space:nowrap">${quandoOS(o)}</td><td>${esc(o.instaladores?.nome || '—')}</td><td>${badgeOS(o)}<div class="mu pq">${esc(PAG_OS[o.pagamento_status] || '')}</div></td></tr>`).join('')}</tbody></table><div class="mu pq" style="padding:8px 4px">${l.length} ordem(ns)</div>` : '<div class="vazio">Nenhuma ordem de serviço neste filtro.</div>';
+    $('#os-lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Nº</th><th>Tipo</th><th>Cliente</th><th>Veículo</th><th>Visita</th><th>Técnico</th><th>Situação</th></tr></thead><tbody>${l.map((o) => `<tr class="click" data-os="${o.id}"><td><b>${o.numero}</b></td><td>${esc(TIPOS_OS[o.tipo] || o.tipo)}</td><td>${esc(o.clientes?.nome || '')}<div class="mu pq">${esc(o.endereco_visita || enderecoCliente(o.clientes))}</div></td><td>${o.veiculos ? esc(o.veiculos.marca + ' ' + o.veiculos.modelo) + '<div class="mu pq">' + esc(o.veiculos.placa || '') + '</div>' : '—'}</td><td style="white-space:nowrap">${quandoOS(o)}</td><td>${esc(o.instaladores?.nome || '—')}</td><td>${badgeOS(o)}<div class="mu pq">${esc(pagOS(o))}</div></td></tr>`).join('')}</tbody></table><div class="mu pq" style="padding:8px 4px">${l.length} ordem(ns)</div>` : '<div class="vazio">Nenhuma ordem de serviço neste filtro.</div>';
     $$('#os-lista [data-os]').forEach((tr) => tr.onclick = () => formOS(lista.find((o) => o.id === tr.dataset.os)));
   };
   $('#f-per').onchange = () => { OS_FILTRO.mes = $('#f-per').value === 'mes' ? ($('#f-mes').value || hoje().slice(0, 7)) : ''; desenharLista(); };
@@ -672,7 +676,7 @@ function exportarOS(l) {
   const num = (v) => v == null ? '' : String(Number(v).toFixed(2)).replace('.', ',');
   const dt = (d) => d ? dataBR(diaDe(d)) : '', hr = (d) => d ? horaDe(d) : '';
   const cab = ['Nº', 'Tipo', 'Situação', 'Pagamento do técnico', 'Cliente', 'WhatsApp do cliente', 'Veículo', 'Placa', 'Data da visita', 'Hora', 'Endereço da visita', 'Técnico', 'Valor do técnico (R$)', 'Criada em', 'Iniciada em', 'Concluída em', 'Responsável no local', 'Descrição do serviço', 'Observações finais'];
-  const linhas = l.map((o) => [o.numero, TIPOS_OS[o.tipo] || o.tipo, (STATUS_OS[o.status] || [o.status])[0], PAG_OS[o.pagamento_status] || o.pagamento_status, o.clientes?.nome || '', o.clientes?.whatsapp ? fmtFone(o.clientes.whatsapp) : '',
+  const linhas = l.map((o) => [o.numero, TIPOS_OS[o.tipo] || o.tipo, (STATUS_OS[o.status] || [o.status])[0], pagOS(o) || o.pagamento_status, o.clientes?.nome || '', o.clientes?.whatsapp ? fmtFone(o.clientes.whatsapp) : '',
     o.veiculos ? o.veiculos.marca + ' ' + o.veiculos.modelo : '', o.veiculos?.placa || '', dt(o.agendada_para), hr(o.agendada_para), o.endereco_visita || enderecoCliente(o.clientes), o.instaladores?.nome || '', num(o.valor_instalador),
     dt(o.created_at), dt(o.iniciada_em), dt(o.concluida_em), o.responsavel_nome || '', o.descricao_servico || '', o.observacoes_finais || '']);
   const csv = '﻿' + [cab, ...linhas].map((r) => r.map((v) => { const s = String(v ?? ''); return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n');
@@ -696,7 +700,7 @@ async function formOS(o, pre = {}) {
   const dia = o?.agendada_para ? diaDe(o.agendada_para) : pre.dia || '';
   const hora = o?.agendada_para ? horaDe(o.agendada_para) : '';
   const m = modal(`<div class="cab"><h1 style="font-size:18px">${nova ? 'Nova ordem de serviço' : 'OS ' + o.numero}</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
-  ${nova ? '' : `<div style="margin:-6px 0 12px">${badgeOS(o)} <span class="mu pq">${esc(PAG_OS[o.pagamento_status] || '')}${o.concluida_em ? ' · concluída em ' + dataHora(o.concluida_em) : ''}</span></div>`}
+  ${nova ? '' : `<div style="margin:-6px 0 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">${badgeOS(o)} <span class="mu pq">${esc(pagOS(o))}${o.concluida_em ? ' · concluída em ' + dataHora(o.concluida_em) : ''}</span>${o.status === 'concluida' && o.pagamento_status === 'pendente' ? '<button type="button" class="btn mini" id="b-aprovar">Aprovar e liberar pagamento</button>' : ''}</div>`}
   <form class="form" id="fos" novalidate>
     <label class="campo req c8"><span>Cliente</span><select name="cliente_id" required ${nova ? '' : 'disabled'}><option value="">Selecione o cliente</option>${clis.map((c) => `<option value="${c.id}" ${c.id === cliId ? 'selected' : ''}>${esc(c.nome)}${c.status === 'pre_cadastro' ? ' (pré-cadastro)' : ''}</option>`).join('')}</select></label>
     <label class="campo req c4"><span>Tipo</span><select name="tipo">${Object.entries(TIPOS_OS).map(([k, v]) => `<option value="${k}" ${(o?.tipo || pre.tipo || 'instalacao') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
@@ -714,6 +718,7 @@ async function formOS(o, pre = {}) {
     </div>
   </form>`);
   $$('[data-x]', m).forEach((b) => b.onclick = fecharModal);
+  if ($('#b-aprovar', m)) $('#b-aprovar', m).onclick = (e) => { if (!confirm('Conferiu as fotos e a localização? Aprovar libera o pagamento de ' + brl(o.valor_instalador) + ' ao técnico.')) return; rodar(e.currentTarget, async () => { const r = await sb.rpc('os_aprovar', { p_os: o.id }); if (r.error) throw r.error; fecharModal(); toast('OS ' + o.numero + ' aprovada. Pagamento liberado.'); rota(); }); };
   const f = $('#fos', m), selCli = f.cliente_id, selVei = f.veiculo_id, inEnd = f.endereco_visita;
   const carregarVeiculos = async () => {
     const cid = selCli.value;
