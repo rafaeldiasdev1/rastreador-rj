@@ -430,6 +430,24 @@ async function preCadastro(req: Request) {
   return json({ ok: true, valor: PRECO_PROMO });
 }
 
+// ---------------- instaladores (convite e link de acesso) ----------------
+const URL_INSTALADOR = "https://app.rjdomotica.com/instalador/";
+async function linkAcessoInstalador(email: string) {
+  // link de uso único para o instalador criar a própria senha (vale pelo prazo configurado no Supabase Auth)
+  const { data, error } = await db.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: URL_INSTALADOR } });
+  if (error || !data?.properties?.action_link) throw new Error("Não foi possível gerar o link de acesso: " + (error?.message || "sem link"));
+  return { link: data.properties.action_link, user_id: data.user.id };
+}
+async function emailAcessoInstalador(email: string, nome: string, link: string, empresa: string, novo: boolean) {
+  if (!(env("RESEND_API_KEY") && env("EMAIL_REMETENTE"))) return false;
+  const titulo = novo ? "Bem-vindo à equipe de instaladores" : "Seu link de acesso";
+  const texto = `Olá, ${primeiroNome(nome)}! ${novo ? `Você foi cadastrado como instalador parceiro da ${empresa}.` : "Aqui está um novo link de acesso à área do instalador."}<br><br>Toque no botão abaixo para criar sua senha. Depois é só entrar em <b style="color:#e8eaed">app.rjdomotica.com/instalador</b> com este e-mail e a senha criada. Lá você também encontra o curso de instalação.<br><br><a href="${link}" style="display:inline-block;background:#38d6f5;color:#0b0d10;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px">Criar minha senha</a><br><br><span style="color:#9aa3ad;font-size:13px">O link é de uso único e expira. Se expirar, peça um novo à ${empresa}.</span>`;
+  const html = emailHtml({ titulo, texto }, null, empresa, "instalador").replace(`${empresa} · Mensagem automática. Se já pagou, desconsidere.`, `${empresa} · Você recebeu esta mensagem porque foi cadastrado como instalador.`);
+  const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + env("RESEND_API_KEY"), "Content-Type": "application/json" },
+    body: JSON.stringify({ from: env("EMAIL_REMETENTE"), to: [email], subject: `${empresa} · ${titulo}`, html, ...(env("EMAIL_RESPOSTA") ? { reply_to: env("EMAIL_RESPOSTA") } : {}) }) });
+  return r.ok;
+}
+
 // ---------------- ações do painel ----------------
 async function adminDe(req: Request) {
   const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
@@ -506,6 +524,43 @@ async function acaoAdmin(req: Request) {
       await db.from("clientes").delete().eq("id", c.id);
       await registrar(null, "cliente_excluido", `${c.nome} (${c.documento || c.status}) excluído`, autor);
       return json({ ok: true });
+    }
+    case "convidar_instalador": {
+      const email = limpa(b.email, 120).toLowerCase(), nome = limpa(b.nome, 100);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error("E-mail inválido.");
+      if (nome.length < 3) throw new Error("Informe o nome do instalador.");
+      let zap = soDig(b.whatsapp); if (zap.length === 10 || zap.length === 11) zap = "55" + zap;
+      const valor = b.valor_padrao === "" || b.valor_padrao == null ? null : Number(b.valor_padrao);
+      if (valor !== null && !(valor >= 0)) throw new Error("Valor por instalação inválido.");
+      const cria = await db.auth.admin.createUser({ email, email_confirm: true, user_metadata: { nome } });
+      if (cria.error && !/already|registered|exists/i.test(cria.error.message)) throw new Error("Não foi possível criar o login: " + cria.error.message);
+      const { link, user_id } = await linkAcessoInstalador(email);
+      const { data: ja } = await db.from("instaladores").select("user_id").eq("user_id", user_id).maybeSingle();
+      if (ja) throw new Error("Este e-mail já é de um instalador cadastrado. Use \"Gerar link de acesso\" na lista.");
+      const { error } = await db.from("instaladores").insert({ user_id, nome, documento: soDig(b.documento) || null, whatsapp: zap || null, chave_pix: limpa(b.chave_pix, 140) || null, valor_padrao: valor, ativo: true });
+      if (error) throw new Error(error.message);
+      const empresa = cfg.nome_empresa || "RJ Domótica";
+      let email_enviado = false;
+      try { email_enviado = await emailAcessoInstalador(email, nome, link, empresa, true); } catch (_) { /* segue: o admin tem o link */ }
+      await registrar(null, "instalador", `Instalador ${nome} (${email}) cadastrado${email_enviado ? "; convite enviado por e-mail" : ""}`, autor);
+      return json({ ok: true, user_id, link, email_enviado });
+    }
+    case "link_instalador": {
+      const { data: inst } = await db.from("instaladores").select("user_id, nome").eq("user_id", b.user_id).maybeSingle();
+      if (!inst) throw new Error("Instalador não encontrado.");
+      const { data: u, error: eu } = await db.auth.admin.getUserById(inst.user_id);
+      if (eu || !u?.user?.email) throw new Error("Login do instalador não encontrado.");
+      const { link } = await linkAcessoInstalador(u.user.email);
+      let email_enviado = false;
+      if (b.enviar_email) { try { email_enviado = await emailAcessoInstalador(u.user.email, inst.nome, link, cfg.nome_empresa || "RJ Domótica", false); } catch (_) { /* segue */ } }
+      await registrar(null, "instalador", `Novo link de acesso gerado para ${inst.nome}${email_enviado ? " (enviado por e-mail)" : ""}`, autor);
+      return json({ ok: true, link, email: u.user.email, email_enviado });
+    }
+    case "emails_instaladores": {
+      const { data: insts } = await db.from("instaladores").select("user_id");
+      const out: Obj = {};
+      for (const i of insts || []) { const { data: u } = await db.auth.admin.getUserById(i.user_id); out[i.user_id] = { email: u?.user?.email || "", ultimo_acesso: u?.user?.last_sign_in_at || null }; }
+      return json({ ok: true, usuarios: out });
     }
     case "rodar_rotina":
       return json({ ok: true, relatorio: await rotina() });

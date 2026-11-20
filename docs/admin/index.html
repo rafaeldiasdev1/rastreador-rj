@@ -114,6 +114,7 @@ code{background:var(--sf2);border:1px solid var(--ln);border-radius:8px;padding:
     <a href="#inicio" data-r="inicio"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg>Visão geral</a>
     <a href="#clientes" data-r="clientes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6"/></svg>Clientes</a>
     <a href="#cobrancas" data-r="cobrancas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Cobranças</a>
+    <a href="#instaladores" data-r="instaladores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Instaladores</a>
     <a href="#mensagens" data-r="mensagens"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensagens</a>
     <a href="#config" data-r="config"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Configurações</a>
     <div class="rod"><span id="quem"></span><button class="btn2 mini" id="sair">Sair</button></div>
@@ -234,7 +235,7 @@ function rota() {
   const [r, id] = (location.hash.slice(1) || 'inicio').split('-c-');
   $$('aside a').forEach((a) => a.classList.toggle('ativo', a.dataset.r === (r === 'cliente' ? 'clientes' : r)));
   fecharModal();
-  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, mensagens: telaMensagens, config: telaConfig };
+  const telas = { inicio: telaInicio, clientes: telaClientes, cliente: () => telaCliente(id), cobrancas: telaCobrancas, instaladores: telaInstaladores, mensagens: telaMensagens, config: telaConfig };
   (telas[r] || telaInicio)();
   window.scrollTo(0, 0);
 }
@@ -547,6 +548,77 @@ async function telaMensagens() {
     const l = chk(await sb.from('mensagens').select('*, clientes(nome)').order('created_at', { ascending: false }).limit(300));
     $('#lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Quando</th><th>Cliente</th><th>Canal</th><th>Tipo</th><th>Status</th><th>Detalhe</th></tr></thead><tbody>${l.map((x) => linhaMsg(x, true)).join('')}</tbody></table>` : '<div class="vazio">Nenhuma mensagem enviada ainda.</div>';
   } catch (e) { $('#lista').innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; }
+}
+
+/* ---------- instaladores ---------- */
+async function telaInstaladores() {
+  const m = $('#main');
+  m.innerHTML = `<div class="cab"><h1>Instaladores</h1><button class="btn" id="b-novo-i">+ Cadastrar instalador</button></div>
+  <p class="mu" style="margin:-6px 0 14px;line-height:1.6">O instalador recebe um link para criar a senha e passa a entrar em <b>app.rjdomotica.com/instalador</b>, onde abre as ordens de serviço e faz o curso.</p>
+  <div class="painel" style="padding:4px 8px"><div class="rolagem" id="lista"><div class="vazio">Carregando…</div></div></div>`;
+  $('#b-novo-i').onclick = () => formInstalador();
+  let l, us = {};
+  try {
+    l = chk(await sb.from('instaladores').select('*').order('nome'));
+    if (l.length) us = (await api('emails_instaladores')).usuarios || {};
+  } catch (e) { if ($('#lista')) $('#lista').innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; return; }
+  if (!$('#lista')) return; // saiu da tela enquanto carregava
+  $('#lista').innerHTML = l.length ? `<table class="tab"><thead><tr><th>Instalador</th><th>WhatsApp</th><th>Valor por instalação</th><th>Último acesso</th><th>Situação</th><th></th></tr></thead><tbody>${l.map((i) => `<tr><td><b>${esc(i.nome)}</b><div class="mu pq">${esc(us[i.user_id]?.email || '')}</div></td><td>${i.whatsapp ? fmtFone(i.whatsapp) : '—'}</td><td>${brl(i.valor_padrao)}</td><td class="pq">${us[i.user_id]?.ultimo_acesso ? dataHora(us[i.user_id].ultimo_acesso) : '<span class="mu">Ainda não entrou</span>'}</td><td>${i.ativo ? '<span class="badge b-ok">Ativo</span>' : '<span class="badge b-mu">Desativado</span>'}</td><td style="white-space:nowrap"><button class="btn2 mini" data-link="${i.user_id}">Gerar link de acesso</button> <button class="btn2 mini" data-ed="${i.user_id}">Editar</button></td></tr>`).join('')}</tbody></table>`
+    : '<div class="vazio">Nenhum instalador cadastrado ainda. Comece em "+ Cadastrar instalador".</div>';
+  $$('[data-ed]').forEach((b) => b.onclick = () => formInstalador(l.find((i) => i.user_id === b.dataset.ed), us[b.dataset.ed]?.email));
+  $$('[data-link]').forEach((b) => b.onclick = () => rodar(b, async () => {
+    const i = l.find((x) => x.user_id === b.dataset.link);
+    const r = await api('link_instalador', { user_id: i.user_id, enviar_email: true });
+    mostrarLinkInstalador(i, r.link, r.email_enviado, false);
+  }));
+}
+function mostrarLinkInstalador(i, link, emailEnviado, novo) {
+  const zap = so(i.whatsapp);
+  const texto = `Olá, ${i.nome.split(' ')[0]}! ${novo ? 'Seu cadastro de instalador RJ Domótica está pronto.' : 'Aqui está seu novo link de acesso à área do instalador RJ Domótica.'} Toque no link para criar sua senha: ${link} Depois, entre em app.rjdomotica.com/instalador com seu e-mail e a senha criada.`;
+  const m = modal(`<div class="cab"><h1 style="font-size:18px">${novo ? 'Instalador cadastrado' : 'Link de acesso gerado'}</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
+  <p style="line-height:1.6;margin:0 0 12px">${emailEnviado ? 'Enviamos o link por e-mail para o instalador. Se preferir, mande também pelo WhatsApp:' : 'O e-mail não foi enviado (o envio de e-mail não está configurado ou falhou). Mande o link pelo WhatsApp:'}</p>
+  <div style="background:#0b0d10;border:1px solid #262a31;border-radius:10px;padding:10px;font-family:monospace;font-size:12px;word-break:break-all;max-height:110px;overflow:auto">${esc(link)}</div>
+  <p class="mu pq" style="margin:10px 0 16px;line-height:1.5">O link é de uso único e expira (padrão do Supabase: 1 hora). Se expirar, use "Gerar link de acesso" na lista.</p>
+  <div class="acoes" style="justify-content:flex-end"><button class="btn2" id="b-cp">Copiar mensagem</button>${zap ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${zap}?text=${encodeURIComponent(texto)}">Abrir no WhatsApp</a>` : ''}</div>`, true);
+  $('[data-x]', m).onclick = () => { fecharModal(); telaInstaladores(); };
+  $('#b-cp', m).onclick = () => copiar(texto);
+}
+function formInstalador(i, email) {
+  const novo = !i; i = i || { ativo: true };
+  const m = modal(`<div class="cab"><h1 style="font-size:18px">${novo ? 'Cadastrar instalador' : 'Editar instalador'}</h1><button class="btn2 mini" data-x aria-label="Fechar">✕</button></div>
+  <form class="form" id="fi" novalidate>
+    <label class="campo req c8"><span>Nome completo</span><input name="nome" required value="${esc(i.nome)}"></label>
+    <label class="campo c4"><span>CPF</span><input name="documento" inputmode="numeric" value="${esc(i.documento ? fmtDoc(i.documento) : '')}"></label>
+    <label class="campo ${novo ? 'req ' : ''}c6"><span>E-mail (login do instalador)</span><input name="email" type="email" ${novo ? 'required' : 'disabled'} value="${esc(email || '')}"></label>
+    <label class="campo c6"><span>WhatsApp</span><input name="whatsapp" type="tel" placeholder="(21) 99999-9999" value="${esc(i.whatsapp ? fmtFone(i.whatsapp) : '')}"></label>
+    <label class="campo c8"><span>Chave Pix (para pagar as instalações)</span><input name="chave_pix" value="${esc(i.chave_pix)}"></label>
+    <label class="campo c4"><span>Valor por instalação (R$)</span><input name="valor_padrao" inputmode="decimal" placeholder="150,00" value="${i.valor_padrao != null ? esc(Number(i.valor_padrao).toFixed(2).replace('.', ',')) : ''}"></label>
+    ${novo ? '' : `<label class="c12" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" name="ativo" value="1" ${i.ativo ? 'checked' : ''}><span>Ativo (desmarque para tirar o acesso sem apagar o histórico)</span></label>`}
+    <div class="c12" id="fi-erro" style="color:#ff8a80"></div>
+    <div class="c12 acoes" style="justify-content:flex-end"><button type="button" class="btn2" data-x>Cancelar</button><button class="btn" type="submit">${novo ? 'Cadastrar e gerar acesso' : 'Salvar'}</button></div>
+  </form>`);
+  $$('[data-x]', m).forEach((b) => b.onclick = fecharModal);
+  $('#fi', m).onsubmit = (e) => {
+    e.preventDefault();
+    const f = e.target, err = $('#fi-erro', m), v = Object.fromEntries(new FormData(f).entries());
+    err.textContent = '';
+    if ((v.nome || '').trim().length < 3) return err.textContent = 'Informe o nome do instalador.';
+    if (novo && !/^\S+@\S+\.\S+$/.test(v.email || '')) return err.textContent = 'E-mail inválido.';
+    const doc = so(v.documento); if (doc && !cpfValido(doc)) return err.textContent = 'CPF inválido.';
+    let zap = so(v.whatsapp); if (zap.length === 10 || zap.length === 11) zap = '55' + zap;
+    if (zap && zap.length < 12) return err.textContent = 'WhatsApp inválido: use DDD + número.';
+    const valor = v.valor_padrao ? Number(String(v.valor_padrao).replace(/\./g, '').replace(',', '.')) : null;
+    if (valor !== null && !(valor >= 0)) return err.textContent = 'Valor por instalação inválido.';
+    rodar(f.querySelector('[type=submit]'), async () => {
+      if (novo) {
+        const r = await api('convidar_instalador', { nome: v.nome.trim(), email: v.email.trim().toLowerCase(), documento: doc, whatsapp: zap, chave_pix: (v.chave_pix || '').trim(), valor_padrao: valor });
+        fecharModal(); mostrarLinkInstalador({ nome: v.nome.trim(), whatsapp: zap }, r.link, r.email_enviado, true);
+      } else {
+        chk(await sb.from('instaladores').update({ nome: v.nome.trim(), documento: doc || null, whatsapp: zap || null, chave_pix: (v.chave_pix || '').trim() || null, valor_padrao: valor, ativo: v.ativo === '1' }).eq('user_id', i.user_id));
+        fecharModal(); toast('Instalador salvo.'); telaInstaladores();
+      }
+    });
+  };
 }
 
 /* ---------- configurações ---------- */

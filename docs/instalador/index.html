@@ -63,6 +63,20 @@
     <button id="sair" class="sec oculto" type="button">Sair</button>
   </header>
 
+  <!-- CRIAR SENHA (link do convite ou "esqueci a senha") -->
+  <section id="v-senha" class="oculto">
+    <h1>Crie sua senha</h1>
+    <p class="mu">Escolha uma senha para entrar na área do instalador. Use pelo menos 8 caracteres.</p>
+    <form id="f-senha" class="card">
+      <label class="f" for="nova1">Nova senha</label>
+      <input id="nova1" type="password" autocomplete="new-password" minlength="8" required>
+      <label class="f" for="nova2">Repita a senha</label>
+      <input id="nova2" type="password" autocomplete="new-password" minlength="8" required>
+      <div id="senha-msg"></div>
+      <div class="row" style="margin-top:14px"><button type="submit">Salvar senha e entrar</button></div>
+    </form>
+  </section>
+
   <!-- LOGIN -->
   <section id="v-login" class="oculto">
     <h1>Entrar</h1>
@@ -157,8 +171,8 @@
   var os = null;
 
   function mostrar(v) {
-    ["v-login", "v-inicio", "v-os"].forEach(function (id) { $(id).classList.toggle("oculto", id !== v); });
-    $("sair").classList.toggle("oculto", v === "v-login");
+    ["v-login", "v-senha", "v-inicio", "v-os"].forEach(function (id) { $(id).classList.toggle("oculto", id !== v); });
+    $("sair").classList.toggle("oculto", v === "v-login" || v === "v-senha");
     window.scrollTo(0, 0);
   }
   function msg(el, texto, tipo) { $(el).innerHTML = texto ? '<div class="msg ' + (tipo || "er") + '"></div>' : ""; if (texto) $(el).firstChild.textContent = texto; }
@@ -366,8 +380,27 @@
     btn.disabled = false; btn.textContent = "Encerrar instalação";
   });
 
-  sb.auth.onAuthStateChange(function (ev) { if (ev === "PASSWORD_RECOVERY") { var n = prompt("Digite a nova senha (mínimo 8 caracteres):"); if (n) sb.auth.updateUser({ password: n }).then(function (r) { alert(r.error ? erroTexto(r.error) : "Senha alterada."); }); } });
-  iniciar();
+  // ── Criar senha: o link do convite/recuperação chega com #...type=recovery ──
+  var criandoSenha = /type=(recovery|invite)/.test(location.hash) || /error_code=/.test(location.hash);
+  function telaSenha() {
+    mostrar("v-senha");
+    if (/error_code=/.test(location.hash)) msg("senha-msg", "Este link expirou ou já foi usado. Peça um novo link à RJ Domótica ou use \"Esqueci a senha\" na tela de entrada.");
+  }
+  $("f-senha").addEventListener("submit", async function (ev) {
+    ev.preventDefault(); msg("senha-msg", "");
+    var a = $("nova1").value, b = $("nova2").value;
+    if (a.length < 8) return msg("senha-msg", "A senha precisa ter pelo menos 8 caracteres.");
+    if (a !== b) return msg("senha-msg", "As duas senhas não são iguais.");
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s) return msg("senha-msg", "Este link expirou ou já foi usado. Peça um novo link à RJ Domótica ou use \"Esqueci a senha\" na tela de entrada.");
+    var r = await sb.auth.updateUser({ password: a });
+    if (r.error) return msg("senha-msg", erroTexto(r.error));
+    criandoSenha = false;
+    history.replaceState(null, "", location.pathname + location.search);
+    iniciar();
+  });
+  sb.auth.onAuthStateChange(function (ev) { if (ev === "PASSWORD_RECOVERY") { criandoSenha = true; telaSenha(); } });
+  if (criandoSenha) telaSenha(); else iniciar();
 })();
 </script>
 </body>
